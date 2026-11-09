@@ -1,0 +1,62 @@
+### Pruebas de la API de facturas
+### Se ejecutan con la extension REST Client de VS Code:
+### clic en "Send Request", encima de cada peticion.
+### Antes, la API debe estar prendida (npm run dev).
+
+### 1. La API esta viva
+GET http://localhost:3001/
+
+### 2. Todos los productos (8)
+GET http://localhost:3001/api/productos
+
+### 3. Un producto: el PR004
+GET http://localhost:3001/api/productos/PR004
+
+### 4. ERROR 404: un producto que no existe
+GET http://localhost:3001/api/productos/PR999
+
+### 5. Crear un producto (201)
+POST http://localhost:3001/api/productos
+Content-Type: application/json
+
+{
+  "codigo": "PR009",
+  "nombre": "Parlante Bluetooth JBL",
+  "stock": 20,
+  "valorunitario": 350000
+}
+
+### 6. ERROR 400: datos malos
+POST http://localhost:3001/api/productos
+Content-Type: application/json
+
+{
+  "codigo": "",
+  "nombre": "",
+  "stock": -3,
+  "valorunitario": 0
+}
+
+### 7. ERROR 400: un codigo que ya existe
+POST http://localhost:3001/api/productos
+Content-Type: application/json
+
+{
+  "codigo": "PR001",
+  "nombre": "Otra laptop",
+  "stock": 1,
+  "valorunitario": 100
+}
+
+### 8. Modificar el PR009 (200)
+PUT http://localhost:3001/api/productos/PR009
+Content-Type: application/json
+
+{
+  "nombre": "Parlante Bluetooth JBL Flip",
+  "stock": 18,
+  "valorunitario": 330000
+}
+
+### 9. Eliminar el PR009 (204)
+DELETE http://localhost:3001/api/productos/PR009

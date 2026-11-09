@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<!-- =============================================================
+     index.html: el FRONTEND de facturas (bloque 3 de 3)
+     QUE hace: muestra los productos y el formulario.
+     PARA QUE: es lo que ve el usuario. NO tiene datos propios:
+     se los pide a la API con fetch (en app.js).
+     ============================================================= -->
+<html lang="es">
+<head>
+    <!-- Letras con tildes y enes -->
+    <meta charset="UTF-8">
+    <!-- Que se vea bien en el celular -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- El titulo de la pestana -->
+    <title>Facturas · Productos</title>
+    <!-- La hoja de estilos -->
+    <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+    <!-- Encabezado de la pagina -->
+    <header>
+        <h1>Facturas · Productos</h1>
+        <p>Frontend → API (puerto 3001) → base de datos SQLite</p>
+    </header>
+
+    <main>
+        <!-- Aqui app.js escribe los mensajes: exito (verde) o error (rojo) -->
+        <p id="mensaje" class="mensaje"></p>
+
+        <!-- El formulario para crear o modificar un producto -->
+        <section>
+            <!-- El titulo cambia a "Modificar producto" al hacer clic en Editar -->
+            <h2 id="tituloFormulario">Nuevo producto</h2>
+            <form id="formulario">
+                <!-- Cada label va con su input: al hacer clic en el texto, se activa el campo -->
+                <label>Código <input id="codigo" maxlength="10" placeholder="PR009"></label>
+                <label>Nombre <input id="nombre" placeholder="Parlante Bluetooth JBL"></label>
+                <label>Stock <input id="stock" type="number" min="0" step="1" placeholder="20"></label>
+                <label>Valor unitario <input id="valorunitario" type="number" min="1" placeholder="350000"></label>
+                <!-- type="submit": al hacer clic se "envia" el formulario (app.js lo atrapa) -->
+                <button type="submit">Guardar</button>
+                <!-- type="button": no envia el formulario. Limpia y vuelve al modo "nuevo" -->
+                <button type="button" id="cancelar" class="secundario">Cancelar</button>
+            </form>
+        </section>
+
+        <!-- La tabla de productos: app.js llena el tbody con lo que responda la API -->
+        <section>
+            <h2>Productos</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Nombre</th>
+                        <th>Stock</th>
+                        <th>Valor unitario</th>
+                        <th>Valor inventario</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <!-- Vacio: lo llena app.js -->
+                <tbody id="filas"></tbody>
+            </table>
+        </section>
+    </main>
+
+    <!-- El JavaScript, al final: asi los elementos de arriba ya existen cuando se ejecuta -->
+    <script src="app.js"></script>
+</body>
+</html>
