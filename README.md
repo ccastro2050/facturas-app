@@ -17,7 +17,124 @@ Cada bloque de programa tiene **su propia dirección**:
 | API | http://localhost:3001 | `npm run dev` dentro de `api/` |
 | Frontend | http://localhost:3000 | `npm start` dentro de `front/` |
 
-![Los tres bloques](conceptos/img/tres_bloques.png)
+---
+
+## Conceptos: qué se construyó y por qué así
+
+**¿Para qué?** Para entender **qué** hay en este proyecto antes de ejecutarlo o leer el código. Cada tema está explicado con más detalle en la carpeta [`conceptos/`](conceptos/00_INDICE.md).
+
+### 1.1 Los tres bloques, y por qué van separados
+
+![Los tres bloques: frontend, API y base de datos. El frontend nunca habla con la base de datos](conceptos/img/tres_bloques.png)
+
+| Bloque | Carpeta | Qué es | Su trabajo |
+|---|---|---|---|
+| **1. Base de datos** | `bd/` | SQLite: un archivo, `facturas.db` | **Guardar** los productos, aunque se apague el computador |
+| **2. API** | `api/` | Un programa de Node.js con Express | **Entregar y recibir** los productos, y aplicar las reglas |
+| **3. Frontend** | `front/` | Una página HTML con JavaScript | **Mostrar** los productos y el formulario al usuario |
+
+**¿Por qué tres bloques separados y no uno solo?**
+
+| Razón | Ejemplo en facturas |
+|---|---|
+| **Cada uno se puede cambiar sin tocar los otros** | Se puede rediseñar la página por completo, y la API y la base de datos siguen iguales. Mañana el frontend se hace con React, **y la API no cambia**. |
+| **Seguridad** | El frontend corre en el computador del usuario: cualquiera puede ver su código. Si hablara directo con la base de datos, cualquiera podría borrarla. Por eso **el frontend nunca toca la base de datos**: solo la API. |
+| **Varios frontends, una sola API** | La misma API puede atender a la página web, a una aplicación de celular y a otro sistema. |
+| **Se prueban por separado** | La API se prueba con REST Client, **sin** frontend. Si algo falla, se sabe en qué bloque está. |
+
+> 💡 **Como en un restaurante:** el **cliente** (frontend) pide en la mesa; el **mesero y la cocina** (API) toman el pedido y preparan el plato; la **despensa** (base de datos) guarda los ingredientes. El cliente **nunca entra a la despensa**.
+
+### 1.2 Petición y respuesta: así hablan el frontend y la API
+
+El frontend le **pide** algo a la API, y la API le **responde**. Siempre en ese orden.
+
+| Parte | Qué lleva | Ejemplo |
+|---|---|---|
+| **Petición** (*request*) | Un **método** (qué se quiere hacer), una **URL** (sobre qué) y, a veces, un **cuerpo** con datos | `GET http://localhost:3001/api/productos/PR004` |
+| **Respuesta** (*response*) | Un **código de estado** (cómo salió) y un **cuerpo** con los datos | `200` y el Mouse HP |
+
+**Los métodos HTTP:** qué se quiere hacer.
+
+| Método | Qué hace | En facturas |
+|---|---|---|
+| **GET** | **Pedir** datos. No cambia nada. | Ver los productos |
+| **POST** | **Crear** algo nuevo | Agregar un producto |
+| **PUT** | **Modificar** algo que ya existe | Cambiar el stock de un producto |
+| **DELETE** | **Borrar** | Eliminar un producto |
+
+> 💡 Son las 4 operaciones de cualquier sistema de datos, que se conocen como **CRUD**: *Create* (crear), *Read* (leer), *Update* (actualizar) y *Delete* (borrar).
+
+**Los códigos de estado:** cómo salió.
+
+| Código | Qué significa | Cuándo lo responde nuestra API |
+|---|---|---|
+| **200** OK | Salió bien, aquí están los datos | GET y PUT que funcionan |
+| **201** Created | Se **creó** algo nuevo | POST que funciona |
+| **204** No Content | Se hizo, y no hay nada que devolver | DELETE que funciona |
+| **400** Bad Request | La **petición está mal hecha**: datos malos | POST o PUT con datos inválidos, o un código repetido |
+| **404** Not Found | **No existe** lo que se pidió | Un producto que no existe |
+| **500** Internal Server Error | Falló el **servidor** | Un error en el código de la API |
+
+> 💡 Regla fácil: **2xx** = éxito; **4xx** = el cliente pidió mal; **5xx** = falló el servidor.
+
+### 1.3 JSON: el idioma en que hablan
+
+**JSON** (*JavaScript Object Notation*) es la forma de escribir datos como **texto**, para enviarlos por la red. Se parece a los objetos de JavaScript de la EA2, pero las propiedades van **entre comillas dobles**:
+
+```json
+{
+  "codigo": "PR004",
+  "nombre": "Mouse HP",
+  "stock": 55,
+  "valorunitario": 90000
+}
+```
+
+### 1.4 Los endpoints de la API
+
+Un **endpoint** es una combinación de **método + ruta**. Cada uno hace una sola cosa:
+
+| Método | Ruta | Qué hace | Si sale bien | Si sale mal |
+|---|---|---|---|---|
+| `GET` | `/api/productos` | Lista todos los productos | 200 | — |
+| `GET` | `/api/productos/:codigo` | Un producto | 200 | 404 |
+| `POST` | `/api/productos` | Crea un producto | 201 | 400 |
+| `PUT` | `/api/productos/:codigo` | Modifica un producto | 200 | 400 o 404 |
+| `DELETE` | `/api/productos/:codigo` | Elimina un producto | 204 | 404 |
+
+`:codigo` es un **parámetro**: un valor que va **dentro** de la ruta. En `/api/productos/PR004`, el código es `PR004`.
+
+### 1.5 La programación por capas: el orden **dentro** de la API
+
+**¿Por qué no escribir toda la API en un solo archivo?** Porque al crecer, todo queda mezclado: las URL, las reglas y el SQL. En la **programación por capas**, cada capa tiene **un solo trabajo** y solo habla con la de abajo:
+
+![Las 3 capas de la API: rutas, servicios y repositorio, encima de la base de datos](conceptos/img/capas_api.png)
+
+| Capa | Archivo | Su único trabajo | Lo que **NO** hace |
+|---|---|---|---|
+| **1. Rutas** | `productoRutas.js` | Recibir la petición HTTP y responder con el código correcto | No valida, no calcula, no escribe SQL |
+| **2. Servicios** | `productoServicio.js` | Las **reglas del negocio**: validar los datos y calcular el valor del inventario | No sabe de URL ni de códigos HTTP; no escribe SQL |
+| **3. Repositorio** | `productoRepositorio.js` | El **SQL**: leer y escribir en la base de datos | No valida ni calcula |
+
+**El recorrido de una petición:** así viaja `GET /api/productos/PR001` por las capas, ida y vuelta:
+
+![Recorrido de una petición GET por el frontend, las rutas, los servicios y el repositorio](conceptos/img/recorrido_peticion.png)
+
+> 💡 **La ventaja de las capas:** si mañana se cambia SQLite por otra base de datos (PostgreSQL, SQL Server), se cambia **solo el repositorio**. Las rutas y los servicios **no se tocan**. Y si cambia una regla del negocio, se cambia **solo el servicio**.
+
+> ⚠️ **No confundir los bloques con las capas.** Los **bloques** son las 3 partes de la aplicación (base de datos, API y frontend). Las **capas** son el orden **dentro de la API** (rutas, servicios y repositorio).
+
+### 1.6 Los principios SOLID, en una imagen
+
+**SOLID** son 5 consejos para escribir código que se pueda cambiar sin romperlo. Cada letra es un principio:
+
+![Los 5 principios SOLID con un ejemplo del proyecto de facturas](conceptos/img/solid.png)
+
+| ¿Se ve hoy en facturas? | Principio |
+|---|---|
+| ✅ **Sí, claramente** | **S**: cada capa hace una sola cosa. Es la razón de las 3 capas. |
+| ✅ **Sí, de forma sencilla** | **D**: el servicio le pide los datos al repositorio **sin saber** que hay SQLite. |
+| 💡 Se entiende, pero se nota más en proyectos grandes | **O**, **L** e **I**. Están explicados con calma en `conceptos/04_PRINCIPIOS_SOLID.md`. |
 
 ---
 
@@ -266,21 +383,7 @@ Prueben en la página:
 1. Lean `conceptos/00_INDICE.md`: ahí está el orden de lectura (API, capas, SOLID…).
 2. Lean la guía `PASO_A_PASO.md` (o el `.pdf`): construye este mismo proyecto desde cero, archivo por archivo, con el código comentado línea por línea.
 
-Así viaja una petición por las tres capas de la API:
-
-![Recorrido de una petición](conceptos/img/recorrido_peticion.png)
-
----
-
-## Endpoints de la API
-
-| Método | Ruta | Qué hace | Códigos que responde |
-|---|---|---|---|
-| `GET` | `/api/productos` | Lista todos los productos | 200 |
-| `GET` | `/api/productos/:codigo` | Devuelve un producto | 200, 404 |
-| `POST` | `/api/productos` | Crea un producto | 201, 400 |
-| `PUT` | `/api/productos/:codigo` | Modifica un producto | 200, 400, 404 |
-| `DELETE` | `/api/productos/:codigo` | Elimina un producto | 204, 404 |
+El resumen de los conceptos, con los gráficos, está al inicio de este README, en **Conceptos**.
 
 ---
 
