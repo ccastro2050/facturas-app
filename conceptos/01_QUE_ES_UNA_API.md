@@ -6,10 +6,11 @@
 
 ## 1.1 La analogía del restaurante
 
-![La analogía del restaurante: cliente, mesero y cocina](img/restaurante.png)
+![La analogía del restaurante: cliente, mesero y cocina, despensa](img/restaurante.png)
 
-En un restaurante, el cliente no entra a la cocina. Le dice al **mesero** lo que
-quiere, el mesero lo lleva a la cocina y vuelve con el plato.
+En un restaurante, el cliente no entra a la cocina ni a la despensa. Le dice al **mesero** lo que
+quiere, el mesero lo lleva a la cocina, la cocina saca los ingredientes de la **despensa**,
+prepara el plato y el mesero lo trae.
 
 Una **API** (*Application Programming Interface*, interfaz de programación de
 aplicaciones) es ese mesero: un programa que **recibe pedidos y entrega
@@ -18,9 +19,9 @@ respuestas**, sin que el que pide tenga que saber cómo se preparan.
 | Restaurante | Ejemplo de facturas |
 |---|---|
 | Cliente | El frontend (`front/`) abierto en el navegador |
-| Mesero | La API con Express (`api/`) |
+| Mesero y cocina | La API con Express (`api/`): recibe el pedido y lo prepara (valida y calcula) |
 | Menú | La lista de endpoints (`GET /api/productos`, ...) |
-| Cocina | La base de datos SQLite (`bd/facturas.db`) |
+| Despensa | La base de datos SQLite (`bd/facturas.db`): guarda los datos |
 
 ## 1.2 Cliente y servidor, petición y respuesta
 
