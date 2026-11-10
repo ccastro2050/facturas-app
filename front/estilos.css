@@ -1,89 +1,25 @@
 /* =============================================================
-   estilos.css: la apariencia del frontend de facturas
+   estilos.css: los POCOS estilos propios del frontend de facturas
+   Todo lo demas (grilla, formulario, tabla, botones, mensajes y
+   responsive) lo hace Bootstrap, que se carga desde la nube.
+   Este archivo va DESPUES de Bootstrap en index.html, para que
+   estas reglas se apliquen encima de las de Bootstrap.
+   Ninguna de estas reglas depende del tamano de la pantalla:
+   por eso no necesitan responsive.
    ============================================================= */
 
-/* Variables: los colores, en un solo lugar */
-:root {
-    --azul: #1F4E79;        /* encabezado y botones principales */
-    --gris: #F2F4F7;        /* fondo de la tabla */
-    --verde: #2E7D32;       /* mensajes de exito */
-    --rojo: #C62828;        /* mensajes de error y boton eliminar */
+/* El nombre de la aplicacion en la barra: un poco mas grueso */
+.navbar-brand {
+    font-weight: 700;          /* 700 = negrita */
 }
 
-/* La pagina completa */
-body {
-    font-family: system-ui, sans-serif;   /* la letra del sistema */
-    margin: 0;                             /* sin margen alrededor */
-    background: #FFFFFF;
-    color: #222222;
+/* La columna del codigo: letra de ancho fijo, como en una factura */
+.codigo {
+    font-family: Consolas, monospace;   /* monospace = todas las letras del mismo ancho */
 }
 
-/* El encabezado azul */
-header {
-    background: var(--azul);
-    color: white;
-    padding: 16px 24px;
+/* El valor del inventario: resaltado, porque lo calcula la API */
+.valor-inventario {
+    font-weight: 600;          /* semi-negrita */
+    color: #0B5394;            /* azul oscuro */
 }
-
-header h1 { margin: 0; }
-header p { margin: 4px 0 0; opacity: 0.85; }
-
-/* El contenido, centrado y con un ancho maximo */
-main {
-    max-width: 1000px;
-    margin: 0 auto;
-    padding: 16px 24px;
-}
-
-/* El formulario: los campos en fila, y bajan si no caben (flex-wrap) */
-form {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    align-items: flex-end;
-}
-
-label {
-    display: flex;
-    flex-direction: column;   /* el texto arriba, el campo abajo */
-    font-size: 0.9rem;
-}
-
-input {
-    padding: 6px 8px;
-    border: 1px solid #999999;
-    border-radius: 4px;
-}
-
-/* Los botones */
-button {
-    background: var(--azul);
-    color: white;
-    border: none;
-    border-radius: 4px;
-    padding: 7px 14px;
-    cursor: pointer;           /* la manito al pasar el mouse */
-}
-
-button.secundario { background: #607D8B; }
-button.peligro { background: var(--rojo); }
-
-/* La tabla */
-table {
-    width: 100%;
-    border-collapse: collapse;   /* une los bordes de las celdas */
-}
-
-th, td {
-    border: 1px solid #CCCCCC;
-    padding: 6px 8px;
-    text-align: left;
-}
-
-th { background: var(--gris); }
-
-/* Los mensajes: vacio no ocupa espacio */
-.mensaje:empty { display: none; }
-.mensaje { padding: 8px 12px; border-radius: 4px; }
-.mensaje.exito { background: #E8F5E9; color: var(--verde); }
-.mensaje.error { background: #FFEBEE; color: var(--rojo); }

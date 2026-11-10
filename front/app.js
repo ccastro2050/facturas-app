@@ -17,14 +17,15 @@ function pesos(valor) {
 }
 
 // mostrarMensaje: escribe un mensaje arriba de la pagina.
-// tipo = "exito" (verde) o "error" (rojo): es la clase de CSS
+// tipo = "exito" (verde) o "error" (rojo)
 function mostrarMensaje(texto, tipo) {
-    // Busca el <p id="mensaje"> de index.html
+    // Busca el <div id="mensaje"> de index.html
     const mensaje = document.getElementById("mensaje");
     // textContent: el texto que se ve
     mensaje.textContent = texto;
-    // className: las clases de CSS, para que se vea verde o rojo
-    mensaje.className = "mensaje " + tipo;
+    // className: las clases de Bootstrap. alert-success = verde; alert-danger = rojo.
+    // Al cambiar className se quita d-none, y el mensaje aparece
+    mensaje.className = "alert " + (tipo === "exito" ? "alert-success" : "alert-danger");
 }
 
 // cargarProductos: GET a la API y llena la tabla.
@@ -36,17 +37,20 @@ async function cargarProductos() {
         const respuesta = await fetch(API);
         // .json(): convierte el texto JSON de la respuesta en un arreglo de objetos
         const productos = await respuesta.json();
-        // map: convierte cada producto en una fila <tr> de texto HTML; join(""): las pega todas
+        // map: convierte cada producto en una fila <tr> de texto HTML; join(""): las pega todas.
+        // Clases de Bootstrap: text-end = numero a la derecha; btn btn-sm = boton pequeno;
+        // btn-outline-primary = borde azul; btn-outline-danger = borde rojo.
+        // codigo y valor-inventario son clases propias, de estilos.css
         document.getElementById("filas").innerHTML = productos.map((p) => `
             <tr>
-                <td>${p.codigo}</td>
+                <td class="codigo">${p.codigo}</td>
                 <td>${p.nombre}</td>
-                <td>${p.stock}</td>
-                <td>${pesos(p.valorunitario)}</td>
-                <td>${pesos(p.valorinventario)}</td>
-                <td>
-                    <button onclick="editar('${p.codigo}')" class="secundario">Editar</button>
-                    <button onclick="eliminar('${p.codigo}')" class="peligro">Eliminar</button>
+                <td class="text-end">${p.stock}</td>
+                <td class="text-end">${pesos(p.valorunitario)}</td>
+                <td class="text-end valor-inventario">${pesos(p.valorinventario)}</td>
+                <td class="text-nowrap">
+                    <button onclick="editar('${p.codigo}')" class="btn btn-sm btn-outline-primary">Editar</button>
+                    <button onclick="eliminar('${p.codigo}')" class="btn btn-sm btn-outline-danger">Eliminar</button>
                 </td>
             </tr>`).join("");
     } catch (error) {

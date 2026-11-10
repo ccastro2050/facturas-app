@@ -184,7 +184,7 @@ facturas-app/
     ├── package.json                     # la ficha del frontend: Express y el comando npm start
     ├── servidor.js                      # le da al frontend su URL: http://localhost:3000
     ├── index.html                       # la página: formulario y tabla
-    ├── estilos.css                      # la apariencia
+    ├── estilos.css                      # unos pocos estilos propios (la apariencia la da Bootstrap, desde la nube)
     └── app.js                           # conversa con la API usando fetch
 ```
 

@@ -1002,11 +1002,15 @@ DELETE http://localhost:3001/api/productos/PR009
 
 ## Parte 5 · Bloque 3: el frontend
 
-**¿Para qué?** Es la página que ve el usuario. **No tiene datos propios**: todo se lo pide a la API con **`fetch`**. Usa HTML, CSS y JavaScript, como en la EA2.
+**¿Para qué?** Es la página que ve el usuario. **No tiene datos propios**: todo se lo pide a la API con **`fetch`**. Usa HTML y JavaScript, como en la EA2, y **Bootstrap** para la apariencia.
 
 ### 5.1 La página: `index.html`
 
 **¿Para qué?** La estructura: el formulario para crear o modificar un producto, y la tabla vacía que llenará el JavaScript.
+
+**¿Qué es Bootstrap?** Una librería de estilos **ya hechos**. En vez de escribir el CSS, se le ponen **clases** a cada etiqueta (`class="btn btn-primary"`) y Bootstrap le da la apariencia. Además ya es **responsive**: la página se acomoda sola al celular.
+
+**¿Desde dónde se carga?** Desde la **nube** (un CDN: *Content Delivery Network*), con un `<link>` en el `<head>`. No se descarga ni se instala nada.
 
 En la carpeta `front/`, creen el archivo `index.html` y peguen:
 
@@ -1017,63 +1021,110 @@ En la carpeta `front/`, creen el archivo `index.html` y peguen:
      QUE hace: muestra los productos y el formulario.
      PARA QUE: es lo que ve el usuario. NO tiene datos propios:
      se los pide a la API con fetch (en app.js).
+     ESTILOS: Bootstrap desde la nube (CDN), que ya es responsive,
+     y unos pocos estilos propios en estilos.css.
      ============================================================= -->
 <html lang="es">
 <head>
     <!-- Letras con tildes y enes -->
     <meta charset="UTF-8">
-    <!-- Que se vea bien en el celular -->
+    <!-- Que se vea bien en el celular (Bootstrap lo necesita para ser responsive) -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- El titulo de la pestana -->
     <title>Facturas · Productos</title>
-    <!-- La hoja de estilos -->
+    <!-- Bootstrap desde la nube (CDN): trae todos los estilos ya hechos.
+         integrity = la huella del archivo: si alguien lo cambia, el navegador no lo usa -->
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+          integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+          crossorigin="anonymous">
+    <!-- Los pocos estilos propios. Va DESPUES de Bootstrap, para aplicarse encima -->
     <link rel="stylesheet" href="estilos.css">
 </head>
-<body>
-    <!-- Encabezado de la pagina -->
-    <header>
-        <h1>Facturas · Productos</h1>
-        <p>Frontend → API (puerto 3001) → base de datos SQLite</p>
-    </header>
+<!-- bg-light: fondo gris muy claro -->
+<body class="bg-light">
+    <!-- navbar: la barra de arriba. bg-primary: azul de Bootstrap. navbar-dark: letras blancas. mb-4: espacio abajo -->
+    <nav class="navbar navbar-dark bg-primary mb-4">
+        <!-- container: centra el contenido y le pone margenes a los lados -->
+        <div class="container">
+            <!-- navbar-brand: el nombre de la aplicacion, en la barra -->
+            <span class="navbar-brand">Facturas · Productos</span>
+            <!-- navbar-text: un texto pequeno a la derecha. d-none d-md-inline = oculto en el celular, visible en pantallas medianas o mas -->
+            <span class="navbar-text d-none d-md-inline">Frontend → API → base de datos</span>
+        </div>
+    </nav>
 
-    <main>
-        <!-- Aqui app.js escribe los mensajes: exito (verde) o error (rojo) -->
-        <p id="mensaje" class="mensaje"></p>
+    <!-- container: todo el contenido, centrado -->
+    <main class="container">
+        <!-- Aqui app.js escribe los mensajes. alert = caja de aviso; d-none = oculta al empezar -->
+        <div id="mensaje" class="alert d-none" role="alert"></div>
 
-        <!-- El formulario para crear o modificar un producto -->
-        <section>
-            <!-- El titulo cambia a "Modificar producto" al hacer clic en Editar -->
-            <h2 id="tituloFormulario">Nuevo producto</h2>
-            <form id="formulario">
-                <!-- Cada label va con su input: al hacer clic en el texto, se activa el campo -->
-                <label>Código <input id="codigo" maxlength="10" placeholder="PR009"></label>
-                <label>Nombre <input id="nombre" placeholder="Parlante Bluetooth JBL"></label>
-                <label>Stock <input id="stock" type="number" min="0" step="1" placeholder="20"></label>
-                <label>Valor unitario <input id="valorunitario" type="number" min="1" placeholder="350000"></label>
-                <!-- type="submit": al hacer clic se "envia" el formulario (app.js lo atrapa) -->
-                <button type="submit">Guardar</button>
-                <!-- type="button": no envia el formulario. Limpia y vuelve al modo "nuevo" -->
-                <button type="button" id="cancelar" class="secundario">Cancelar</button>
-            </form>
+        <!-- card: una tarjeta con borde. shadow-sm: sombra suave. mb-4: espacio abajo -->
+        <section class="card shadow-sm mb-4">
+            <!-- card-body: el relleno de adentro de la tarjeta -->
+            <div class="card-body">
+                <!-- El titulo cambia a "Modificar producto" al hacer clic en Editar. h5: tamano de titulo -->
+                <h2 id="tituloFormulario" class="h5 card-title">Nuevo producto</h2>
+                <!-- row: una fila de la grilla. g-3: espacio entre columnas. align-items-end: todo alineado abajo -->
+                <form id="formulario" class="row g-3 align-items-end">
+                    <!-- col-12 = ancho completo en celular; col-md-2 = 2 de 12 partes en pantallas medianas o mas -->
+                    <div class="col-12 col-md-2">
+                        <!-- form-label: el texto del campo. for = el id del campo al que pertenece -->
+                        <label for="codigo" class="form-label">Código</label>
+                        <!-- form-control: el estilo de Bootstrap para los campos -->
+                        <input id="codigo" class="form-control" maxlength="10" placeholder="PR009">
+                    </div>
+                    <!-- El nombre: mas ancho (3 de 12 partes) -->
+                    <div class="col-12 col-md-3">
+                        <label for="nombre" class="form-label">Nombre</label>
+                        <input id="nombre" class="form-control" placeholder="Parlante Bluetooth JBL">
+                    </div>
+                    <!-- col-6 = mitad del ancho en celular, para que stock y valor queden juntos -->
+                    <div class="col-6 col-md-2">
+                        <label for="stock" class="form-label">Stock</label>
+                        <input id="stock" class="form-control" type="number" min="0" step="1" placeholder="20">
+                    </div>
+                    <div class="col-6 col-md-2">
+                        <label for="valorunitario" class="form-label">Valor unitario</label>
+                        <input id="valorunitario" class="form-control" type="number" min="1" placeholder="350000">
+                    </div>
+                    <!-- Los botones (3 de 12 partes). d-flex gap-2: uno al lado del otro, con espacio entre ellos -->
+                    <div class="col-12 col-md-3 d-flex gap-2">
+                        <!-- type="submit": al hacer clic se "envia" el formulario (app.js lo atrapa). btn-primary: azul -->
+                        <button type="submit" class="btn btn-primary">Guardar</button>
+                        <!-- type="button": no envia el formulario; limpia y vuelve al modo "nuevo". btn-secondary: gris -->
+                        <button type="button" id="cancelar" class="btn btn-secondary">Cancelar</button>
+                    </div>
+                </form>
+            </div>
         </section>
 
-        <!-- La tabla de productos: app.js llena el tbody con lo que responda la API -->
-        <section>
-            <h2>Productos</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Código</th>
-                        <th>Nombre</th>
-                        <th>Stock</th>
-                        <th>Valor unitario</th>
-                        <th>Valor inventario</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <!-- Vacio: lo llena app.js -->
-                <tbody id="filas"></tbody>
-            </table>
+        <!-- La tabla de productos, tambien en una tarjeta -->
+        <section class="card shadow-sm">
+            <div class="card-body">
+                <h2 class="h5 card-title">Productos</h2>
+                <!-- table-responsive: en el celular, la tabla se desliza de lado en vez de salirse de la pantalla -->
+                <div class="table-responsive">
+                    <!-- table: estilo de tabla. table-striped: filas a rayas. table-hover: resalta la fila del mouse.
+                         align-middle: el texto centrado de arriba a abajo en cada celda -->
+                    <table class="table table-striped table-hover align-middle">
+                        <!-- table-primary: encabezado en azul claro -->
+                        <thead class="table-primary">
+                            <tr>
+                                <th>Código</th>
+                                <th>Nombre</th>
+                                <!-- text-end: los numeros alineados a la derecha -->
+                                <th class="text-end">Stock</th>
+                                <th class="text-end">Valor unitario</th>
+                                <th class="text-end">Valor inventario</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <!-- Vacio: lo llena app.js con lo que responda la API -->
+                        <tbody id="filas"></tbody>
+                    </table>
+                </div>
+            </div>
         </section>
     </main>
 
@@ -1085,107 +1136,62 @@ En la carpeta `front/`, creen el archivo `index.html` y peguen:
 
 | Parte | Qué hace |
 |---|---|
-| `<p id="mensaje">` | Aquí el JavaScript escribe los mensajes de éxito o de error. |
+| `<link ... bootstrap.min.css>` | Carga **Bootstrap** desde la nube. `integrity` es la huella del archivo: si alguien lo modifica, el navegador no lo usa. |
+| `<link ... estilos.css>` | Los pocos estilos propios. Va **después** de Bootstrap, para aplicarse encima. |
+| `<div id="mensaje" class="alert d-none">` | Aquí el JavaScript escribe los mensajes de éxito o de error. `d-none` = oculto hasta que haya un mensaje. |
 | `<form id="formulario">` | El formulario. Al hacer clic en **Guardar** se "envía", y el JavaScript lo atrapa. |
 | `<tbody id="filas"></tbody>` | El cuerpo de la tabla, **vacío**: lo llena el JavaScript con lo que responda la API. |
 | `<script src="app.js">` al final | El JavaScript va al final, para que los elementos de arriba ya existan cuando se ejecute. |
 
-### 5.2 Los estilos: `estilos.css`
+**Las clases de Bootstrap que se usan:**
 
-**¿Para qué?** La apariencia: el encabezado azul, el formulario en fila, la tabla con bordes y los mensajes en verde o rojo.
+| Clase | Qué hace |
+|---|---|
+| `container` | Centra el contenido y le deja márgenes a los lados. |
+| `navbar`, `bg-primary` | La barra azul de arriba. |
+| `card`, `card-body` | Una tarjeta con borde: un recuadro para el formulario y otro para la tabla. |
+| `row`, `col-12`, `col-md-2` | **La grilla**: la pantalla se divide en 12 partes. `col-12` = todo el ancho en el **celular**; `col-md-2` = 2 de 12 partes en pantallas **medianas o más grandes**. Así se vuelve responsive. |
+| `form-label`, `form-control` | El texto y el campo del formulario. |
+| `btn btn-primary`, `btn-secondary` | Botón azul y botón gris. |
+| `table`, `table-striped`, `table-hover` | Tabla con filas a rayas que se resalta al pasar el mouse. |
+| `table-responsive` | En el celular, la tabla se desliza de lado en vez de salirse de la pantalla. |
+| `alert alert-success` / `alert-danger` | Caja de mensaje verde / roja (las pone `app.js`). |
+| `text-end`, `mb-4`, `d-flex gap-2` | Alinear a la derecha, espacio abajo, poner elementos en fila con espacio. |
+
+### 5.2 Los estilos propios: `estilos.css`
+
+**¿Para qué?** Casi toda la apariencia la pone Bootstrap. Aquí van solo **unos pocos estilos propios**, para no perder la costumbre de escribir CSS: la letra del código del producto y el valor del inventario resaltado.
+
+> 💡 Estos estilos **no necesitan responsive**: no dependen del tamaño de la pantalla. Lo que cambia con el tamaño (columnas, tabla) ya lo hace Bootstrap.
 
 En la carpeta `front/`, creen el archivo `estilos.css` y peguen:
 
 ```css
 /* =============================================================
-   estilos.css: la apariencia del frontend de facturas
+   estilos.css: los POCOS estilos propios del frontend de facturas
+   Todo lo demas (grilla, formulario, tabla, botones, mensajes y
+   responsive) lo hace Bootstrap, que se carga desde la nube.
+   Este archivo va DESPUES de Bootstrap en index.html, para que
+   estas reglas se apliquen encima de las de Bootstrap.
+   Ninguna de estas reglas depende del tamano de la pantalla:
+   por eso no necesitan responsive.
    ============================================================= */
 
-/* Variables: los colores, en un solo lugar */
-:root {
-    --azul: #1F4E79;        /* encabezado y botones principales */
-    --gris: #F2F4F7;        /* fondo de la tabla */
-    --verde: #2E7D32;       /* mensajes de exito */
-    --rojo: #C62828;        /* mensajes de error y boton eliminar */
+/* El nombre de la aplicacion en la barra: un poco mas grueso */
+.navbar-brand {
+    font-weight: 700;          /* 700 = negrita */
 }
 
-/* La pagina completa */
-body {
-    font-family: system-ui, sans-serif;   /* la letra del sistema */
-    margin: 0;                             /* sin margen alrededor */
-    background: #FFFFFF;
-    color: #222222;
+/* La columna del codigo: letra de ancho fijo, como en una factura */
+.codigo {
+    font-family: Consolas, monospace;   /* monospace = todas las letras del mismo ancho */
 }
 
-/* El encabezado azul */
-header {
-    background: var(--azul);
-    color: white;
-    padding: 16px 24px;
+/* El valor del inventario: resaltado, porque lo calcula la API */
+.valor-inventario {
+    font-weight: 600;          /* semi-negrita */
+    color: #0B5394;            /* azul oscuro */
 }
-
-header h1 { margin: 0; }
-header p { margin: 4px 0 0; opacity: 0.85; }
-
-/* El contenido, centrado y con un ancho maximo */
-main {
-    max-width: 1000px;
-    margin: 0 auto;
-    padding: 16px 24px;
-}
-
-/* El formulario: los campos en fila, y bajan si no caben (flex-wrap) */
-form {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    align-items: flex-end;
-}
-
-label {
-    display: flex;
-    flex-direction: column;   /* el texto arriba, el campo abajo */
-    font-size: 0.9rem;
-}
-
-input {
-    padding: 6px 8px;
-    border: 1px solid #999999;
-    border-radius: 4px;
-}
-
-/* Los botones */
-button {
-    background: var(--azul);
-    color: white;
-    border: none;
-    border-radius: 4px;
-    padding: 7px 14px;
-    cursor: pointer;           /* la manito al pasar el mouse */
-}
-
-button.secundario { background: #607D8B; }
-button.peligro { background: var(--rojo); }
-
-/* La tabla */
-table {
-    width: 100%;
-    border-collapse: collapse;   /* une los bordes de las celdas */
-}
-
-th, td {
-    border: 1px solid #CCCCCC;
-    padding: 6px 8px;
-    text-align: left;
-}
-
-th { background: var(--gris); }
-
-/* Los mensajes: vacio no ocupa espacio */
-.mensaje:empty { display: none; }
-.mensaje { padding: 8px 12px; border-radius: 4px; }
-.mensaje.exito { background: #E8F5E9; color: var(--verde); }
-.mensaje.error { background: #FFEBEE; color: var(--rojo); }
 ```
 
 ### 5.3 El JavaScript: `app.js`
@@ -1214,14 +1220,15 @@ function pesos(valor) {
 }
 
 // mostrarMensaje: escribe un mensaje arriba de la pagina.
-// tipo = "exito" (verde) o "error" (rojo): es la clase de CSS
+// tipo = "exito" (verde) o "error" (rojo)
 function mostrarMensaje(texto, tipo) {
-    // Busca el <p id="mensaje"> de index.html
+    // Busca el <div id="mensaje"> de index.html
     const mensaje = document.getElementById("mensaje");
     // textContent: el texto que se ve
     mensaje.textContent = texto;
-    // className: las clases de CSS, para que se vea verde o rojo
-    mensaje.className = "mensaje " + tipo;
+    // className: las clases de Bootstrap. alert-success = verde; alert-danger = rojo.
+    // Al cambiar className se quita d-none, y el mensaje aparece
+    mensaje.className = "alert " + (tipo === "exito" ? "alert-success" : "alert-danger");
 }
 
 // cargarProductos: GET a la API y llena la tabla.
@@ -1233,17 +1240,20 @@ async function cargarProductos() {
         const respuesta = await fetch(API);
         // .json(): convierte el texto JSON de la respuesta en un arreglo de objetos
         const productos = await respuesta.json();
-        // map: convierte cada producto en una fila <tr> de texto HTML; join(""): las pega todas
+        // map: convierte cada producto en una fila <tr> de texto HTML; join(""): las pega todas.
+        // Clases de Bootstrap: text-end = numero a la derecha; btn btn-sm = boton pequeno;
+        // btn-outline-primary = borde azul; btn-outline-danger = borde rojo.
+        // codigo y valor-inventario son clases propias, de estilos.css
         document.getElementById("filas").innerHTML = productos.map((p) => `
             <tr>
-                <td>${p.codigo}</td>
+                <td class="codigo">${p.codigo}</td>
                 <td>${p.nombre}</td>
-                <td>${p.stock}</td>
-                <td>${pesos(p.valorunitario)}</td>
-                <td>${pesos(p.valorinventario)}</td>
-                <td>
-                    <button onclick="editar('${p.codigo}')" class="secundario">Editar</button>
-                    <button onclick="eliminar('${p.codigo}')" class="peligro">Eliminar</button>
+                <td class="text-end">${p.stock}</td>
+                <td class="text-end">${pesos(p.valorunitario)}</td>
+                <td class="text-end valor-inventario">${pesos(p.valorinventario)}</td>
+                <td class="text-nowrap">
+                    <button onclick="editar('${p.codigo}')" class="btn btn-sm btn-outline-primary">Editar</button>
+                    <button onclick="eliminar('${p.codigo}')" class="btn btn-sm btn-outline-danger">Eliminar</button>
                 </td>
             </tr>`).join("");
     } catch (error) {
@@ -1485,6 +1495,10 @@ Ahora tienen **dos terminales prendidas**:
 
 ![La página con la tabla de los 8 productos, su valor de inventario y los botones Editar y Eliminar](imagenes/front_productos.png)
 
+**En el celular** la misma página se acomoda sola, gracias a Bootstrap: los campos del formulario quedan uno debajo del otro y la tabla se desliza de lado.
+
+![La misma página en el celular: el formulario en una columna y la tabla deslizable](imagenes/front_celular.png)
+
 | Lo que aparece | De dónde sale |
 |---|---|
 | Los 8 productos | De la **base de datos**, a través de la API. |
@@ -1615,7 +1629,9 @@ Para subirlo, creen un repositorio **público** en GitHub (**New repository**, s
 | **API** | Programa que recibe peticiones y responde con datos, normalmente en JSON. |
 | **Backend** | La parte que corre en el servidor: aquí, la API y la base de datos. |
 | **Bloque** | Cada una de las 3 partes de la aplicación: base de datos, API y frontend. |
+| **Bootstrap** | Librería de estilos ya hechos: se usan con clases (`btn`, `table`, `col-md-2`). Ya es responsive. |
 | **Capa** | Una parte **dentro de la API** con un solo trabajo: rutas, servicios o repositorio. |
+| **CDN** | Servidor en la nube que entrega librerías como Bootstrap. Se usan con un `<link>`, sin instalar nada. |
 | **Código de estado** | Número de la respuesta que dice cómo salió: 200, 201, 204, 400, 404, 500. |
 | **cors** | Librería que permite que una página de otro origen llame a la API. |
 | **CRUD** | Crear, leer, actualizar y borrar: las 4 operaciones con datos. |
@@ -1632,6 +1648,7 @@ Para subirlo, creen un repositorio **público** en GitHub (**New repository**, s
 | **`package.json`** | La ficha del proyecto: nombre, librerías y comandos. |
 | **Petición / respuesta** | Lo que el cliente pide / lo que el servidor devuelve. |
 | **Puerto** | Número que identifica a un programa en el computador: 3001 para la API. |
+| **Responsive** | Que la página se acomoda sola al tamaño de la pantalla: computador o celular. |
 | **Repositorio (capa)** | La capa que escribe el SQL. No confundir con el repositorio de GitHub. |
 | **Servicio (capa)** | La capa de las reglas del negocio: validar y calcular. |
 | **SOLID** | 5 principios para escribir código fácil de cambiar. |
