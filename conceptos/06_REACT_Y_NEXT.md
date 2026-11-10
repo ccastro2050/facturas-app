@@ -26,10 +26,10 @@ datos de una vez, entre llaves:
 ```jsx
 // Componente: recibe las props y saca "producto" y "alAgregar" con desestructuración
 function TarjetaProducto({ producto, alAgregar }) {
-    return (
+    return (                                              // lo que se dibuja en la página
         <article className="tarjeta">                     {/* el contenedor de la tarjeta */}
             <h3>{producto.nombre}</h3>                    {/* las llaves { } muestran un valor */}
-            <p>Ahorro: ${producto.ahorroPesosMes} al mes</p>
+            <p>Ahorro: ${producto.ahorroPesosMes} al mes</p> {/* un dato del producto (EcoTienda, EA3) */}
             <button onClick={() => alAgregar(producto)}>Agregar</button> {/* avisa al padre */}
         </article>
     );
@@ -55,7 +55,7 @@ final, se ejecuta **una sola vez**, al abrir la página: el lugar ideal para
 pedir los productos a la API.
 
 ```jsx
-useEffect(() => {
+useEffect(() => {                            // se ejecuta después de dibujar la página
     obtenerProductos()                       // la función de lib/api.js (documento 05)
         .then(setProductos)                  // si llegan, los guarda en el estado
         .catch(() => setError("No se pudo conectar con la API")); // si falla, un mensaje claro

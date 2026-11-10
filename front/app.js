@@ -19,8 +19,11 @@ function pesos(valor) {
 // mostrarMensaje: escribe un mensaje arriba de la pagina.
 // tipo = "exito" (verde) o "error" (rojo): es la clase de CSS
 function mostrarMensaje(texto, tipo) {
+    // Busca el <p id="mensaje"> de index.html
     const mensaje = document.getElementById("mensaje");
+    // textContent: el texto que se ve
     mensaje.textContent = texto;
+    // className: las clases de CSS, para que se vea verde o rojo
     mensaje.className = "mensaje " + tipo;
 }
 
@@ -55,6 +58,7 @@ async function cargarProductos() {
 // leerFormulario: arma un objeto con lo que escribio el usuario.
 // Number(...) convierte el texto del input en numero: "20" -> 20
 function leerFormulario() {
+    // .value = lo que el usuario escribio en cada campo
     return {
         codigo: document.getElementById("codigo").value,
         nombre: document.getElementById("nombre").value,
@@ -65,9 +69,13 @@ function leerFormulario() {
 
 // limpiarFormulario: borra los campos y vuelve al modo "nuevo producto"
 function limpiarFormulario() {
+    // reset: deja todos los campos vacios
     document.getElementById("formulario").reset();
+    // Vuelve a dejar escribir el codigo (al editar se bloquea)
     document.getElementById("codigo").disabled = false;
+    // Vuelve el titulo del formulario a "Nuevo producto"
     document.getElementById("tituloFormulario").textContent = "Nuevo producto";
+    // null = ya no se esta editando ningun producto
     codigoEditando = null;
 }
 
@@ -78,12 +86,15 @@ async function guardar(evento) {
     // condicion ? si : no -> la URL y el metodo dependen de si se esta editando
     const url = codigoEditando ? `${API}/${codigoEditando}` : API;
     const metodo = codigoEditando ? "PUT" : "POST";
+    // try: si la API esta apagada, salta al catch
     try {
+        // fetch con datos: el metodo, el encabezado y el cuerpo
         const respuesta = await fetch(url, {
             method: metodo,                                    // POST o PUT
             headers: { "Content-Type": "application/json" },   // le dice a la API que va JSON
             body: JSON.stringify(leerFormulario())              // el objeto convertido en texto JSON
         });
+        // Lee la respuesta de la API: el producto guardado, o los errores
         const datos = await respuesta.json();
         // respuesta.ok = true si el codigo es 2xx (200, 201)
         if (!respuesta.ok) {
@@ -91,26 +102,33 @@ async function guardar(evento) {
             mostrarMensaje(datos.errores ? datos.errores.join(" ") : datos.error, "error");
             return;
         }
+        // Salio bien: mensaje verde y formulario limpio
         mostrarMensaje(`Producto ${datos.codigo} guardado.`, "exito");
         limpiarFormulario();
         // Vuelve a pedir la lista, para que la tabla muestre el cambio
         cargarProductos();
     } catch (error) {
+        // La API no respondio
         mostrarMensaje("No se pudo conectar con la API.", "error");
     }
 }
 
 // editar: trae UN producto de la API (GET /:codigo) y lo pone en el formulario
 async function editar(codigo) {
+    // GET /api/productos/PR001: pide un solo producto
     const respuesta = await fetch(`${API}/${codigo}`);
+    // p = el producto, ya convertido de JSON a objeto
     const p = await respuesta.json();
+    // Pone cada dato del producto en su campo del formulario
     document.getElementById("codigo").value = p.codigo;
     // El codigo no se puede cambiar: es la llave primaria
     document.getElementById("codigo").disabled = true;
     document.getElementById("nombre").value = p.nombre;
     document.getElementById("stock").value = p.stock;
     document.getElementById("valorunitario").value = p.valorunitario;
+    // Cambia el titulo, para que se note que se esta modificando
     document.getElementById("tituloFormulario").textContent = `Modificar producto ${p.codigo}`;
+    // Recuerda cual se edita: asi guardar() sabe que debe usar PUT
     codigoEditando = p.codigo;
 }
 
@@ -120,12 +138,15 @@ async function eliminar(codigo) {
     if (!confirm(`¿Eliminar el producto ${codigo}?`)) {
         return;
     }
+    // fetch con method DELETE: borra el producto en la API
     const respuesta = await fetch(`${API}/${codigo}`, { method: "DELETE" });
     // 204 = borrado
     if (respuesta.status === 204) {
         mostrarMensaje(`Producto ${codigo} eliminado.`, "exito");
+        // Vuelve a pedir la lista, para que la fila desaparezca
         cargarProductos();
     } else {
+        // Cualquier otro codigo (por ejemplo 404): no se pudo
         mostrarMensaje("No se pudo eliminar el producto.", "error");
     }
 }

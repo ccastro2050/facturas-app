@@ -72,7 +72,7 @@ Para **enviar** datos (crear con `POST` o modificar con `PUT`), `fetch` recibe u
 segundo parámetro con el método, el tipo de contenido y el cuerpo (función `guardar()`):
 
 ```js
-const respuesta = await fetch(url, {
+const respuesta = await fetch(url, {                  // fetch CON datos: el segundo dato dice cómo
     method: metodo,                                   // "POST" si es nuevo, "PUT" si se está editando
     headers: { "Content-Type": "application/json" },  // le avisa a la API que va JSON
     body: JSON.stringify(leerFormulario())            // convierte el objeto en texto JSON
@@ -80,7 +80,7 @@ const respuesta = await fetch(url, {
 const datos = await respuesta.json();                 // la respuesta de la API, como objeto
 if (!respuesta.ok) {                                  // ok = false si el código NO es 2xx (400, 404)
     mostrarMensaje(datos.errores ? datos.errores.join(" ") : datos.error, "error"); // muestra los errores
-    return;
+    return;                                           // y no sigue
 }
 ```
 

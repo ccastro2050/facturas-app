@@ -507,6 +507,7 @@ export function crear(producto) {
 // actualizar: cambia el nombre, el stock y el valor de un producto.
 // Devuelve true si lo encontro y lo cambio, false si no existia
 export function actualizar(codigo, producto) {
+    // run llena los 4 ? en orden: nombre, stock, valor y, al final, el codigo del WHERE
     const resultado = bd.prepare("UPDATE producto SET nombre = ?, stock = ?, valorunitario = ? WHERE codigo = ?")
                         .run(producto.nombre, producto.stock, producto.valorunitario, codigo);
     // changes = cuantas filas cambiaron: 1 si existia, 0 si no
@@ -515,7 +516,9 @@ export function actualizar(codigo, producto) {
 
 // eliminar: borra un producto. Devuelve true si lo borro, false si no existia
 export function eliminar(codigo) {
+    // Borra la fila cuyo codigo coincida
     const resultado = bd.prepare("DELETE FROM producto WHERE codigo = ?").run(codigo);
+    // changes = cuantas filas se borraron: 1 si existia, 0 si no
     return resultado.changes > 0;
 }
 ```
@@ -561,6 +564,7 @@ function conValorInventario(producto) {
 // validar: revisa los datos. Devuelve una LISTA de errores (vacia [] si todo esta bien).
 // conCodigo = true cuando se crea (hay que revisar el codigo); false cuando se actualiza
 function validar(datos, conCodigo) {
+    // La lista empieza vacia; cada regla que no se cumple le agrega un mensaje
     const errores = [];
     // El codigo: obligatorio al crear, de 1 a 10 letras o numeros
     if (conCodigo && (typeof datos.codigo !== "string" || datos.codigo.trim() === "" || datos.codigo.length > 10)) {
@@ -578,6 +582,7 @@ function validar(datos, conCodigo) {
     if (typeof datos.valorunitario !== "number" || datos.valorunitario <= 0) {
         errores.push("El valor unitario debe ser un numero mayor que 0.");
     }
+    // Devuelve la lista: vacia = todo bien
     return errores;
 }
 
@@ -591,6 +596,7 @@ export function listarProductos() {
 
 // obtenerProducto: uno, o undefined si no existe
 export function obtenerProducto(codigo) {
+    // Le pide el producto al repositorio (la capa de abajo)
     const producto = repositorio.buscar(codigo);
     // condicion ? si : no
     return producto ? conValorInventario(producto) : undefined;
@@ -599,7 +605,9 @@ export function obtenerProducto(codigo) {
 // crearProducto: valida, revisa que el codigo no exista y guarda.
 // Devuelve { errores } si algo esta mal, o { producto } si se creo
 export function crearProducto(datos) {
+    // true = tambien revisa el codigo, porque es un producto nuevo
     const errores = validar(datos, true);
+    // Si hay al menos un error, no guarda nada y devuelve los errores
     if (errores.length > 0) {
         return { errores };
     }
@@ -614,17 +622,22 @@ export function crearProducto(datos) {
         stock: datos.stock,
         valorunitario: datos.valorunitario
     };
+    // Le pide al repositorio que lo guarde en la base de datos
     repositorio.crear(producto);
+    // Devuelve el producto creado, con su valor de inventario
     return { producto: conValorInventario(producto) };
 }
 
 // actualizarProducto: valida y cambia. Devuelve { errores }, { producto } o {} si no existe
 export function actualizarProducto(codigo, datos) {
+    // false = no revisa el codigo: el codigo no se cambia, viene en la URL
     const errores = validar(datos, false);
     if (errores.length > 0) {
         return { errores };
     }
+    // Los datos que se pueden cambiar: nombre, stock y valor unitario
     const cambios = { nombre: datos.nombre.trim(), stock: datos.stock, valorunitario: datos.valorunitario };
+    // El repositorio hace el UPDATE y dice si el producto existia
     const existia = repositorio.actualizar(codigo, cambios);
     // Si no existia, objeto vacio: la ruta respondera 404
     return existia ? { producto: conValorInventario({ codigo, ...cambios }) } : {};
@@ -632,6 +645,7 @@ export function actualizarProducto(codigo, datos) {
 
 // eliminarProducto: true si lo borro, false si no existia
 export function eliminarProducto(codigo) {
+    // No hay reglas para borrar: se lo pide directo al repositorio
     return repositorio.eliminar(codigo);
 }
 ```
@@ -671,6 +685,7 @@ import { Router } from "express";
 // Las funciones de la capa de abajo: el servicio
 import * as servicio from "../servicios/productoServicio.js";
 
+// Crea el grupo de rutas de productos (todas quedan debajo de /api/productos)
 const rutas = Router();
 
 // GET /api/productos -> todos los productos
@@ -683,10 +698,12 @@ rutas.get("/", (req, res) => {
 rutas.get("/:codigo", (req, res) => {
     // req.params.codigo = lo que va en lugar de :codigo en la URL
     const producto = servicio.obtenerProducto(req.params.codigo);
+    // !producto = no llego nada: el producto no existe
     if (!producto) {
         // 404 = no existe
         return res.status(404).json({ error: "Producto no encontrado" });
     }
+    // 200 = encontrado: responde con el producto
     res.json(producto);
 });
 
@@ -694,6 +711,7 @@ rutas.get("/:codigo", (req, res) => {
 rutas.post("/", (req, res) => {
     // req.body = el JSON que llego. ?? {} = si llego sin cuerpo, un objeto vacio
     const resultado = servicio.crearProducto(req.body ?? {});
+    // Si el servicio devolvio errores, los datos estan mal
     if (resultado.errores) {
         // 400 = la peticion esta mal hecha (datos malos)
         return res.status(400).json({ errores: resultado.errores });
@@ -704,18 +722,23 @@ rutas.post("/", (req, res) => {
 
 // PUT /api/productos/PR001 -> modifica un producto
 rutas.put("/:codigo", (req, res) => {
+    // req.params.codigo = cual producto; req.body = los datos nuevos
     const resultado = servicio.actualizarProducto(req.params.codigo, req.body ?? {});
+    // 400 = los datos nuevos estan mal
     if (resultado.errores) {
         return res.status(400).json({ errores: resultado.errores });
     }
+    // 404 = ese codigo no existe (el servicio devolvio un objeto vacio)
     if (!resultado.producto) {
         return res.status(404).json({ error: "Producto no encontrado" });
     }
+    // 200 = modificado: responde con el producto actualizado
     res.json(resultado.producto);
 });
 
 // DELETE /api/productos/PR001 -> borra un producto
 rutas.delete("/:codigo", (req, res) => {
+    // eliminarProducto devuelve false si no existia: entonces 404
     if (!servicio.eliminarProducto(req.params.codigo)) {
         return res.status(404).json({ error: "Producto no encontrado" });
     }
@@ -1193,8 +1216,11 @@ function pesos(valor) {
 // mostrarMensaje: escribe un mensaje arriba de la pagina.
 // tipo = "exito" (verde) o "error" (rojo): es la clase de CSS
 function mostrarMensaje(texto, tipo) {
+    // Busca el <p id="mensaje"> de index.html
     const mensaje = document.getElementById("mensaje");
+    // textContent: el texto que se ve
     mensaje.textContent = texto;
+    // className: las clases de CSS, para que se vea verde o rojo
     mensaje.className = "mensaje " + tipo;
 }
 
@@ -1229,6 +1255,7 @@ async function cargarProductos() {
 // leerFormulario: arma un objeto con lo que escribio el usuario.
 // Number(...) convierte el texto del input en numero: "20" -> 20
 function leerFormulario() {
+    // .value = lo que el usuario escribio en cada campo
     return {
         codigo: document.getElementById("codigo").value,
         nombre: document.getElementById("nombre").value,
@@ -1239,9 +1266,13 @@ function leerFormulario() {
 
 // limpiarFormulario: borra los campos y vuelve al modo "nuevo producto"
 function limpiarFormulario() {
+    // reset: deja todos los campos vacios
     document.getElementById("formulario").reset();
+    // Vuelve a dejar escribir el codigo (al editar se bloquea)
     document.getElementById("codigo").disabled = false;
+    // Vuelve el titulo del formulario a "Nuevo producto"
     document.getElementById("tituloFormulario").textContent = "Nuevo producto";
+    // null = ya no se esta editando ningun producto
     codigoEditando = null;
 }
 
@@ -1252,12 +1283,15 @@ async function guardar(evento) {
     // condicion ? si : no -> la URL y el metodo dependen de si se esta editando
     const url = codigoEditando ? `${API}/${codigoEditando}` : API;
     const metodo = codigoEditando ? "PUT" : "POST";
+    // try: si la API esta apagada, salta al catch
     try {
+        // fetch con datos: el metodo, el encabezado y el cuerpo
         const respuesta = await fetch(url, {
             method: metodo,                                    // POST o PUT
             headers: { "Content-Type": "application/json" },   // le dice a la API que va JSON
             body: JSON.stringify(leerFormulario())              // el objeto convertido en texto JSON
         });
+        // Lee la respuesta de la API: el producto guardado, o los errores
         const datos = await respuesta.json();
         // respuesta.ok = true si el codigo es 2xx (200, 201)
         if (!respuesta.ok) {
@@ -1265,26 +1299,33 @@ async function guardar(evento) {
             mostrarMensaje(datos.errores ? datos.errores.join(" ") : datos.error, "error");
             return;
         }
+        // Salio bien: mensaje verde y formulario limpio
         mostrarMensaje(`Producto ${datos.codigo} guardado.`, "exito");
         limpiarFormulario();
         // Vuelve a pedir la lista, para que la tabla muestre el cambio
         cargarProductos();
     } catch (error) {
+        // La API no respondio
         mostrarMensaje("No se pudo conectar con la API.", "error");
     }
 }
 
 // editar: trae UN producto de la API (GET /:codigo) y lo pone en el formulario
 async function editar(codigo) {
+    // GET /api/productos/PR001: pide un solo producto
     const respuesta = await fetch(`${API}/${codigo}`);
+    // p = el producto, ya convertido de JSON a objeto
     const p = await respuesta.json();
+    // Pone cada dato del producto en su campo del formulario
     document.getElementById("codigo").value = p.codigo;
     // El codigo no se puede cambiar: es la llave primaria
     document.getElementById("codigo").disabled = true;
     document.getElementById("nombre").value = p.nombre;
     document.getElementById("stock").value = p.stock;
     document.getElementById("valorunitario").value = p.valorunitario;
+    // Cambia el titulo, para que se note que se esta modificando
     document.getElementById("tituloFormulario").textContent = `Modificar producto ${p.codigo}`;
+    // Recuerda cual se edita: asi guardar() sabe que debe usar PUT
     codigoEditando = p.codigo;
 }
 
@@ -1294,12 +1335,15 @@ async function eliminar(codigo) {
     if (!confirm(`¿Eliminar el producto ${codigo}?`)) {
         return;
     }
+    // fetch con method DELETE: borra el producto en la API
     const respuesta = await fetch(`${API}/${codigo}`, { method: "DELETE" });
     // 204 = borrado
     if (respuesta.status === 204) {
         mostrarMensaje(`Producto ${codigo} eliminado.`, "exito");
+        // Vuelve a pedir la lista, para que la fila desaparezca
         cargarProductos();
     } else {
+        // Cualquier otro codigo (por ejemplo 404): no se pudo
         mostrarMensaje("No se pudo eliminar el producto.", "error");
     }
 }

@@ -35,6 +35,7 @@ export function crear(producto) {
 // actualizar: cambia el nombre, el stock y el valor de un producto.
 // Devuelve true si lo encontro y lo cambio, false si no existia
 export function actualizar(codigo, producto) {
+    // run llena los 4 ? en orden: nombre, stock, valor y, al final, el codigo del WHERE
     const resultado = bd.prepare("UPDATE producto SET nombre = ?, stock = ?, valorunitario = ? WHERE codigo = ?")
                         .run(producto.nombre, producto.stock, producto.valorunitario, codigo);
     // changes = cuantas filas cambiaron: 1 si existia, 0 si no
@@ -43,6 +44,8 @@ export function actualizar(codigo, producto) {
 
 // eliminar: borra un producto. Devuelve true si lo borro, false si no existia
 export function eliminar(codigo) {
+    // Borra la fila cuyo codigo coincida
     const resultado = bd.prepare("DELETE FROM producto WHERE codigo = ?").run(codigo);
+    // changes = cuantas filas se borraron: 1 si existia, 0 si no
     return resultado.changes > 0;
 }

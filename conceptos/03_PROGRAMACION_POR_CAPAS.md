@@ -89,7 +89,7 @@ rutas.get("/:codigo", (req, res) => {                            // atiende GET 
 **Paso 3. Capa de servicios** (`productoServicio.js`): le pide la fila al repositorio.
 
 ```js
-export function obtenerProducto(codigo) {
+export function obtenerProducto(codigo) {                  // CAPA 2: la llama la ruta
     const producto = repositorio.buscar(codigo);             // le pide el producto al repositorio
     return producto ? conValorInventario(producto) : undefined; // si existe, le agrega el cálculo
 }
@@ -98,7 +98,7 @@ export function obtenerProducto(codigo) {
 **Paso 4. Capa de repositorio** (`productoRepositorio.js`): busca en la base de datos.
 
 ```js
-export function buscar(codigo) {
+export function buscar(codigo) {                           // CAPA 3: la llama el servicio
     // El ? es un "hueco" que get(codigo) llena con "PR001".
     // Así el texto del usuario nunca se pega dentro del SQL (evita la inyección SQL)
     return bd.prepare("SELECT codigo, nombre, stock, valorunitario FROM producto WHERE codigo = ?")
@@ -112,7 +112,7 @@ valor unitario 2.500.000.
 **Paso 6. De vuelta en servicios**: `conValorInventario()` aplica la regla del negocio.
 
 ```js
-function conValorInventario(producto) {
+function conValorInventario(producto) {                    // la regla del negocio, en el servicio
     // un objeto nuevo: todos los datos de la fila (...producto) más el cálculo
     return { ...producto, valorinventario: producto.stock * producto.valorunitario };
 }

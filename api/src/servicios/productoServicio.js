@@ -19,6 +19,7 @@ function conValorInventario(producto) {
 // validar: revisa los datos. Devuelve una LISTA de errores (vacia [] si todo esta bien).
 // conCodigo = true cuando se crea (hay que revisar el codigo); false cuando se actualiza
 function validar(datos, conCodigo) {
+    // La lista empieza vacia; cada regla que no se cumple le agrega un mensaje
     const errores = [];
     // El codigo: obligatorio al crear, de 1 a 10 letras o numeros
     if (conCodigo && (typeof datos.codigo !== "string" || datos.codigo.trim() === "" || datos.codigo.length > 10)) {
@@ -36,6 +37,7 @@ function validar(datos, conCodigo) {
     if (typeof datos.valorunitario !== "number" || datos.valorunitario <= 0) {
         errores.push("El valor unitario debe ser un numero mayor que 0.");
     }
+    // Devuelve la lista: vacia = todo bien
     return errores;
 }
 
@@ -49,6 +51,7 @@ export function listarProductos() {
 
 // obtenerProducto: uno, o undefined si no existe
 export function obtenerProducto(codigo) {
+    // Le pide el producto al repositorio (la capa de abajo)
     const producto = repositorio.buscar(codigo);
     // condicion ? si : no
     return producto ? conValorInventario(producto) : undefined;
@@ -57,7 +60,9 @@ export function obtenerProducto(codigo) {
 // crearProducto: valida, revisa que el codigo no exista y guarda.
 // Devuelve { errores } si algo esta mal, o { producto } si se creo
 export function crearProducto(datos) {
+    // true = tambien revisa el codigo, porque es un producto nuevo
     const errores = validar(datos, true);
+    // Si hay al menos un error, no guarda nada y devuelve los errores
     if (errores.length > 0) {
         return { errores };
     }
@@ -72,17 +77,22 @@ export function crearProducto(datos) {
         stock: datos.stock,
         valorunitario: datos.valorunitario
     };
+    // Le pide al repositorio que lo guarde en la base de datos
     repositorio.crear(producto);
+    // Devuelve el producto creado, con su valor de inventario
     return { producto: conValorInventario(producto) };
 }
 
 // actualizarProducto: valida y cambia. Devuelve { errores }, { producto } o {} si no existe
 export function actualizarProducto(codigo, datos) {
+    // false = no revisa el codigo: el codigo no se cambia, viene en la URL
     const errores = validar(datos, false);
     if (errores.length > 0) {
         return { errores };
     }
+    // Los datos que se pueden cambiar: nombre, stock y valor unitario
     const cambios = { nombre: datos.nombre.trim(), stock: datos.stock, valorunitario: datos.valorunitario };
+    // El repositorio hace el UPDATE y dice si el producto existia
     const existia = repositorio.actualizar(codigo, cambios);
     // Si no existia, objeto vacio: la ruta respondera 404
     return existia ? { producto: conValorInventario({ codigo, ...cambios }) } : {};
@@ -90,5 +100,6 @@ export function actualizarProducto(codigo, datos) {
 
 // eliminarProducto: true si lo borro, false si no existia
 export function eliminarProducto(codigo) {
+    // No hay reglas para borrar: se lo pide directo al repositorio
     return repositorio.eliminar(codigo);
 }
