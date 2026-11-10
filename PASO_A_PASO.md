@@ -36,7 +36,7 @@ Hoy construimos, **desde cero y completa**, una aplicación pequeña de **factur
 | 2. Bloque 1: la base de datos | `facturas.sql` | Guardar los productos |
 | 3. Bloque 2: la API | El proyecto de Node.js, las 3 capas y el servidor | Entregar y recibir los productos |
 | 4. Probar la API | El navegador y `pruebas.http` | Comprobar cada endpoint, incluidos los errores |
-| 5. Bloque 3: el frontend | `index.html`, `estilos.css` y `app.js` | La página que ve el usuario |
+| 5. Bloque 3: el frontend | `index.html`, `estilos.css`, `app.js` y su servidor | La página que ve el usuario, en http://localhost:3000 |
 | 6. Seguridad y Git | `npm audit`, `.gitignore` y commit | Dejarlo listo en el repositorio |
 
 ## Resumen de los pasos
@@ -55,7 +55,7 @@ Hoy construimos, **desde cero y completa**, una aplicación pequeña de **factur
 | 10 | 3.8 | Crear `servidor.js` | — |
 | 11 | 3.9 | `npm run dev` | `API de facturas en http://localhost:3001` |
 | 12 | 4.1 y 4.2 | Probar en el navegador y con `pruebas.http` | Códigos 200, 201, 204, 400 y 404 |
-| 13 | 5.1 a 5.4 | Crear el frontend y abrirlo | La tabla con los 8 productos |
+| 13 | 5.1 a 5.5 | Crear el frontend, prenderlo con `npm start` y abrir http://localhost:3000 | La tabla con los 8 productos |
 | 14 | 6.1 y 6.2 | `npm audit`, `.gitignore`, commit y push | `found 0 vulnerabilities` |
 
 ---
@@ -101,7 +101,7 @@ facturas-app/                   # la aplicacion completa
 │       ├── rutas/              # CAPA 1: recibe las peticiones HTTP y responde en JSON
 │       ├── servicios/          # CAPA 2: las reglas del negocio (validar y calcular)
 │       └── repositorios/       # CAPA 3: el SQL: lee y escribe en la base de datos
-└── front/                      # BLOQUE 3: el frontend (HTML + CSS + JavaScript)
+└── front/                      # BLOQUE 3: el frontend (HTML + CSS + JavaScript), con su servidor en el puerto 3000
 ```
 
 ### 0.3 Instalar la extensión REST Client
@@ -1328,12 +1328,114 @@ cargarProductos();
 
 > 💡 **El frontend no valida nada:** si el usuario deja el nombre vacío, es la **API** la que responde 400 con el error, y el frontend solo lo muestra. Así, la regla está en **un solo lugar**: el servicio.
 
-### 5.4 Abrir la página
+### 5.4 Darle al frontend su propia URL
 
-**¿Para qué?** Para ver los tres bloques trabajando juntos.
+**¿Qué es?** Un servidor pequeñito para el frontend, en el **puerto 3000**. Solo entrega los archivos de la página (`index.html`, `estilos.css` y `app.js`) al navegador.
 
-1. Comprueben que la API sigue prendida (la terminal dice `API de facturas en http://localhost:3001`).
-2. En el EXPLORER, clic derecho en `front/index.html` → **Reveal in File Explorer**, y doble clic en `index.html`. Se abre en el navegador.
+**¿Para qué?** Para que cada bloque tenga **su propia dirección**, como en una aplicación real:
+
+| Bloque | URL |
+|---|---|
+| Frontend | http://localhost:3000 |
+| API | http://localhost:3001 |
+
+**1.** En la carpeta `front/`, creen el archivo `package.json` y peguen:
+
+```json
+{
+  "name": "facturas-front",
+  "version": "1.0.0",
+  "description": "Frontend de facturas: sirve index.html, estilos.css y app.js en http://localhost:3000",
+  "type": "module",
+  "scripts": {
+    "start": "node servidor.js"
+  },
+  "dependencies": {
+    "express": "^5.3.0"
+  }
+}
+```
+
+| Línea | Qué significa |
+|---|---|
+| `"type": "module"` | Usa `import`, igual que la API. |
+| `"start": "node servidor.js"` | Crea el comando `npm start`, que prende el servidor del frontend. |
+| `"express"` | La misma librería de la API; aquí solo entrega archivos. |
+
+**2.** En la carpeta `front/`, creen el archivo `servidor.js` y peguen:
+
+```js
+// =============================================================
+// servidor.js: el servidor del FRONTEND (bloque 3 de 3)
+// QUE hace: le da al frontend su propia direccion,
+// http://localhost:3000, separada de la API (puerto 3001).
+// Solo entrega los archivos de esta carpeta: index.html, estilos.css y app.js.
+// Se ejecuta con: npm start
+// =============================================================
+
+// express: la misma libreria de la API, aqui solo para entregar archivos
+import express from "express";
+
+// El puerto del frontend: 3000 (la API usa el 3001)
+const PUERTO = 3000;
+
+// Crea la aplicacion
+const app = express();
+
+// express.static(carpeta): entrega tal cual los archivos de la carpeta front.
+// import.meta.dirname = la carpeta donde esta este archivo (front)
+// Si piden "/", entrega index.html
+app.use(express.static(import.meta.dirname));
+
+// Pone el frontend a escuchar. error = lo que fallo (por ejemplo, el puerto ocupado)
+app.listen(PUERTO, (error) => {
+    if (error) {
+        console.error(`No se pudo iniciar el frontend: el puerto ${PUERTO} esta ocupado (${error.code}).`);
+        return;
+    }
+    console.log(`Frontend de facturas en http://localhost:${PUERTO}`);
+    console.log("Recuerden: la API tambien debe estar prendida, en otra terminal.");
+});
+```
+
+| Línea | Qué hace |
+|---|---|
+| `express.static(...)` | Entrega los archivos de la carpeta tal cual. Si el navegador pide `/`, entrega `index.html`. |
+| `import.meta.dirname` | La carpeta donde está este archivo (`front`), para que encuentre la página sin importar desde dónde se ejecute. |
+| `app.listen(3000, ...)` | Deja el frontend escuchando en el puerto 3000. |
+
+**3.** En la carpeta `front/`, creen el archivo `.gitignore` con una línea:
+
+```text
+node_modules/
+```
+
+*Para qué:* que la carpeta de librerías del frontend no se suba a GitHub, igual que en la API.
+
+### 5.5 Prender el frontend y abrir la página
+
+**¿Para qué?** Para ver los tres bloques trabajando juntos, cada uno con su dirección: **página (3000) → API (3001) → base de datos**.
+
+1. Comprueben que la API sigue prendida en su terminal (dice `API de facturas en http://localhost:3001`). **No la cierren.**
+2. Abran una **segunda terminal** con el botón **+** del panel de terminal.
+3. En la terminal nueva ejecuten:
+
+```powershell
+cd ..\front      # sale de api y entra a front (si están en facturas-app, usen: cd front)
+npm install      # SOLO LA PRIMERA VEZ: instala Express para el frontend
+npm start        # prende el frontend
+```
+
+✅ Debe decir: `Frontend de facturas en http://localhost:3000`
+
+4. Abran en el navegador: **http://localhost:3000**
+
+Ahora tienen **dos terminales prendidas**:
+
+| Terminal | Carpeta | Comando | Dice |
+|---|---|---|---|
+| 1 | `api` | `npm run dev` | `API de facturas en http://localhost:3001` |
+| 2 | `front` | `npm start` | `Frontend de facturas en http://localhost:3000` |
 
 **Resultado:**
 
@@ -1423,7 +1525,7 @@ Para subirlo, creen un repositorio **público** en GitHub (**New repository**, s
 
 > 📌 **Ejemplo del profesor:** https://github.com/ccastro2050/facturas-app
 
-> 💡 **Cuando alguien descargue el proyecto** no va a tener `node_modules` ni `facturas.db`. Para ponerlo a funcionar: `cd facturas-app/api`, `npm install`, `npm run crear-bd` y `npm run dev`.
+> 💡 **Cuando alguien descargue el proyecto** no va a tener `node_modules` ni `facturas.db`. Para ponerlo a funcionar: en una terminal, `cd facturas-app/api`, `npm install`, `npm run crear-bd` y `npm run dev`; en otra terminal, `cd facturas-app/front`, `npm install` y `npm start`.
 
 ---
 
@@ -1453,7 +1555,8 @@ Para subirlo, creen un repositorio **público** en GitHub (**New repository**, s
 | `Error: ENOENT: no such file or directory, open '...\bd\facturas.sql'` | `facturas.sql` no está en `facturas-app/bd/`, o tiene otro nombre. | Revisar la estructura de carpetas (0.2). |
 | `ExperimentalWarning: SQLite is an experimental feature` | Falta `--disable-warning=ExperimentalWarning` en el script. **No es un error**: la API funciona igual. | Revisar los scripts de `package.json` (3.2). |
 | `No se pudo iniciar la API: el puerto 3001 esta ocupado (EADDRINUSE).` | La API ya está prendida en **otra terminal**. | Ir a esa terminal y **Ctrl + C**, o cerrarla. |
-| El navegador dice **"No se puede acceder a este sitio"** en `localhost:3001` | La API está apagada. | `npm run dev` en la carpeta `api` (3.9). |
+| El navegador dice **"No se puede acceder a este sitio"** o **"rechazó la conexión"** en `localhost:3001` | La API está apagada. | `npm run dev` en la carpeta `api` (3.9). |
+| El navegador dice **"rechazó la conexión"** en `localhost:3000` | El frontend está apagado. | `npm start` en la carpeta `front` (5.5). |
 | La página dice **"No se pudo conectar con la API"** | La API está apagada. | `npm run dev` y **F5** en la página. |
 | `{"error":"Ruta no encontrada"}` | La URL está mal escrita: `/api/producto`, sin la `s`. | Revisar la URL: `/api/productos`. |
 | El POST de `pruebas.http` responde 400 con todos los errores, aunque los datos están bien | Falta `Content-Type: application/json` o la **línea vacía** antes del JSON. | Revisar el formato (4.2). |

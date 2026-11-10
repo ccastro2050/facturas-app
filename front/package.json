@@ -1,0 +1,12 @@
+{
+  "name": "facturas-front",
+  "version": "1.0.0",
+  "description": "Frontend de facturas: sirve index.html, estilos.css y app.js en http://localhost:3000",
+  "type": "module",
+  "scripts": {
+    "start": "node servidor.js"
+  },
+  "dependencies": {
+    "express": "^5.3.0"
+  }
+}

@@ -10,6 +10,13 @@ Es una aplicación web completa y sencilla, con una sola tabla (`producto`), org
 | 2. API | `api/` | Node.js + Express, en 3 capas | Entrega y recibe los productos en JSON y aplica las reglas del negocio |
 | 3. Frontend | `front/` | HTML + CSS + JavaScript (`fetch`) | La página: muestra, crea, modifica y elimina productos |
 
+Cada bloque de programa tiene **su propia dirección**:
+
+| Bloque | URL | Cómo se prende |
+|---|---|---|
+| API | http://localhost:3001 | `npm run dev` dentro de `api/` |
+| Frontend | http://localhost:3000 | `npm start` dentro de `front/` |
+
 ![Los tres bloques](conceptos/img/tres_bloques.png)
 
 ---
@@ -23,9 +30,9 @@ Es una aplicación web completa y sencilla, con una sola tabla (`producto`), org
 | 2 | Abrir la carpeta en VS Code | Ver el código y tener una terminal a la mano | Cada vez |
 | 3 | Instalar las librerías con `npm install` | La API necesita Express y cors | Solo la primera vez |
 | 4 | Crear la base de datos con `npm run crear-bd` | Tener la tabla `producto` con 8 productos | Solo la primera vez |
-| 5 | Prender la API con `npm run dev` | Que la API reciba peticiones | **Cada vez** que vayan a trabajar |
+| 5 | Prender la API con `npm run dev` (terminal 1) | Que la API reciba peticiones | **Cada vez** que vayan a trabajar |
 | 6 | Ver la API en el navegador | Comprobar que la API responde | Para probar |
-| 7 | Abrir el frontend (`front/index.html`) | Usar la aplicación como usuario | Para probar |
+| 7 | Prender el frontend con `npm start` (terminal 2) y abrir http://localhost:3000 | Usar la aplicación como usuario | **Cada vez** que vayan a trabajar |
 | 8 | Probar todos los endpoints con `pruebas.http` | Probar crear, modificar, eliminar y los errores | Para probar |
 | 9 | Leer la guía y los conceptos | Entender **por qué** está organizado así | Antes o después de la clase |
 
@@ -55,12 +62,14 @@ facturas-app/
 │       ├── servicios/productoServicio.js        # CAPA 2 · reglas: valida y calcula el valor del inventario
 │       └── repositorios/productoRepositorio.js  # CAPA 3 · datos: el SQL que lee y escribe en la base
 └── front/
+    ├── package.json                     # la ficha del frontend: Express y el comando npm start
+    ├── servidor.js                      # le da al frontend su URL: http://localhost:3000
     ├── index.html                       # la página: formulario y tabla
     ├── estilos.css                      # la apariencia
     └── app.js                           # conversa con la API usando fetch
 ```
 
-> Las carpetas `api/node_modules/` y el archivo `bd/facturas.db` **no vienen** en el repositorio: cada uno los crea en su computador en los pasos 3 y 4.
+> Las carpetas `api/node_modules/` y `front/node_modules/`, y el archivo `bd/facturas.db`, **no vienen** en el repositorio: cada uno los crea en su computador en los pasos 3, 4 y 7.
 
 ---
 
@@ -185,13 +194,31 @@ Con la API prendida (paso 5), abran en el navegador estas direcciones:
 
 ---
 
-## Paso 7 · Abrir el frontend
+## Paso 7 · Prender el frontend y abrirlo (cada vez)
 
-*Qué es:* la página web que usa un usuario. Por dentro, `front/app.js` le pide los datos a la API con `fetch`.
+*Qué es:* el frontend también tiene su propio servidor (`front/servidor.js`), en el **puerto 3000**. Ese servidor solo entrega la página (`index.html`, `estilos.css` y `app.js`). Por dentro, `app.js` le pide los datos a la API (puerto 3001) con `fetch`.
 
-*Para qué:* ver los tres bloques trabajando juntos: **página → API → base de datos**.
+*Para qué:* ver los tres bloques trabajando juntos, cada uno con su dirección: **página (3000) → API (3001) → base de datos**.
 
-Con la API prendida, abran con doble clic el archivo `front/index.html` (desde el Explorador de Windows).
+1. **Abran una SEGUNDA terminal** con el botón **+** del panel de terminal. La primera sigue ocupada con la API: no la cierren.
+2. En la terminal nueva ejecuten:
+
+```powershell
+cd front         # desde la carpeta facturas-app (si están en api, usen: cd ..ront)
+npm install      # SOLO LA PRIMERA VEZ: instala Express para el frontend
+npm start        # prende el frontend
+```
+
+✅ Debe decir: `Frontend de facturas en http://localhost:3000`
+
+3. Abran en el navegador: **http://localhost:3000**
+
+Al final deben tener **dos terminales prendidas**:
+
+| Terminal | Carpeta | Comando | Dice |
+|---|---|---|---|
+| 1 | `api` | `npm run dev` | `API de facturas en http://localhost:3001` |
+| 2 | `front` | `npm start` | `Frontend de facturas en http://localhost:3000` |
 
 ![El frontend](imagenes/front_productos.png)
 
@@ -203,7 +230,7 @@ Prueben en la página:
 | Dar clic en **Editar** en una fila, cambiar el stock y dar clic en **Guardar** | La fila se actualiza |
 | Dar clic en **Eliminar** y aceptar | La fila desaparece |
 | Guardar con el nombre vacío o el stock negativo | Aparece un mensaje rojo con el error |
-| Apagar la API (`Ctrl + C`) y recargar la página (`F5`) | Aparece *"No se pudo conectar con la API"* |
+| Apagar la API (`Ctrl + C` en la terminal 1) y recargar la página (`F5`) | Aparece *"No se pudo conectar con la API"* |
 
 ![Sin API](imagenes/front_sin_api.png)
 
@@ -267,4 +294,6 @@ Así viaja una petición por las tres capas de la API:
 | `Cannot find package 'express'` | Faltan las librerías | Hagan el paso 3 (`npm install`) |
 | La API responde **500** y la terminal dice `no such table: producto` | Falta la base de datos | Hagan el paso 4 (`npm run crear-bd`) |
 | La terminal dice **"el puerto 3001 está ocupado"** | La API ya está prendida en otra terminal | Usen esa terminal, o ciérrenla y vuelvan a ejecutar `npm run dev` |
+| En **http://localhost:3000** sale "rechazó la conexión" | El frontend no está prendido | Hagan el paso 7 (`npm start` dentro de `front`) |
+| La página abre, pero dice **"No se pudo conectar con la API"** | El frontend está prendido, pero la API no | Prendan la API en la terminal 1 (paso 5) |
 | `node` o `git` **no se reconoce como comando** | No está instalado, o la terminal se abrió antes de instalarlo | Hagan el paso 0 y abran una terminal nueva |
