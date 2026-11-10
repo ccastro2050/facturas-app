@@ -139,8 +139,6 @@ facturas-app/                   # la aplicacion completa
 
 > 💡 **Como en un restaurante:** el **cliente** (frontend) pide en la mesa; el **mesero y la cocina** (API) toman el pedido y preparan el plato; la **despensa** (base de datos) guarda los ingredientes. El cliente **nunca entra a la despensa**.
 
-![La analogía del restaurante: el cliente es el frontend, el mesero y la cocina son la API, la despensa es la base de datos](conceptos/img/restaurante.png)
-
 ### 1.2 Petición y respuesta: así hablan el frontend y la API
 
 El frontend le **pide** algo a la API, y la API le **responde**. Siempre en ese orden.
