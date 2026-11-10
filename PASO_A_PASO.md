@@ -56,7 +56,7 @@ Hoy construimos, **desde cero y completa**, una aplicación pequeña de **factur
 | 11 | 3.9 | `npm run dev` | `API de facturas en http://localhost:3001` |
 | 12 | 4.1 y 4.2 | Probar en el navegador y con `pruebas.http` | Códigos 200, 201, 204, 400 y 404 |
 | 13 | 5.1 a 5.5 | Crear el frontend, prenderlo con `npm start` y abrir http://localhost:3000 | La tabla con los 8 productos |
-| 14 | 6.1 y 6.2 | `npm audit`, `.gitignore`, commit y push | `found 0 vulnerabilities` |
+| 14 | 6.1 y 6.2 | `npm audit`, `.gitignore`, commit y push a GitHub | `found 0 vulnerabilities` y el proyecto en la nube |
 
 ---
 
@@ -1540,11 +1540,25 @@ npm audit     # revisa las librerias instaladas contra la lista de fallas conoci
 found 0 vulnerabilities
 ```
 
-### 6.2 Subir a GitHub
+### 6.2 Subir el proyecto a GitHub
 
-**¿Para qué?** Para guardar el proyecto en el repositorio. Pero **sin** `node_modules/` (pesa mucho; cada uno la crea con `npm install`) y **sin** `facturas.db` (cada uno la crea con `npm run crear-bd`).
+**¿Para qué?** Para que el proyecto quede **en la nube**: no se pierde si se daña el computador, se puede descargar en otro y es lo que se entrega en la evidencia. Se usan dos herramientas:
 
-**1. Los archivos `.gitignore`.** *Para qué:* decirle a Git qué **no** subir.
+| Herramienta | Qué es | Dónde vive |
+|---|---|---|
+| **Git** | El programa que guarda el **historial** del proyecto: cada versión que se guarda es un *commit*. | En su computador |
+| **GitHub** | La página web donde se guarda una **copia** del repositorio, en la nube. | En internet |
+
+**Antes de empezar, necesitan:**
+
+| Qué | Cómo comprobarlo |
+|---|---|
+| Git instalado | En la terminal, `git -v` debe mostrar `git version 2.x`. Si no, instálenlo desde https://git-scm.com y abran una terminal nueva. |
+| Una cuenta en GitHub | Entren a https://github.com. Si no tienen cuenta, **Sign up** y créenla con su correo. |
+
+#### Paso 1 · Los archivos `.gitignore`: qué NO se sube
+
+**¿Para qué?** Para decirle a Git qué archivos **no** debe subir: `node_modules/` (las librerías: pesan mucho y cada uno las descarga con `npm install`) y `facturas.db` (la base de datos: cada uno la crea con `npm run crear-bd`).
 
 En la carpeta `facturas-app/`, creen `.gitignore` con:
 
@@ -1558,28 +1572,206 @@ En la carpeta `facturas-app/api/`, creen `.gitignore` con:
 node_modules/
 ```
 
-| Línea | Qué ignora |
-|---|---|
-| `bd/*.db` | Cualquier archivo `.db` de la carpeta `bd`: la base de datos. **Sí** se sube `facturas.sql`. |
-| `node_modules/` | Las librerías descargadas. |
+El de `facturas-app/front/` ya lo crearon en la sección 5.4. Al final deben tener **tres**:
 
-**2. Commit y push.** *Para qué:* guardar el proyecto en el historial y subirlo:
+| Archivo | Línea | Qué ignora |
+|---|---|---|
+| `facturas-app/.gitignore` | `bd/*.db` | La base de datos. **Sí** se sube `facturas.sql`, que la crea. |
+| `facturas-app/api/.gitignore` | `node_modules/` | Las librerías de la API. |
+| `facturas-app/front/.gitignore` | `node_modules/` | Las librerías del frontend. |
+
+#### Paso 2 · Decirle a Git quién es usted (solo la primera vez en ese computador)
+
+**¿Para qué?** Cada commit guarda **quién** lo hizo. Si Git no sabe su nombre y su correo, no deja hacer el commit.
 
 ```powershell
-cd ..                                                  # sale de api/ a facturas-app/, la raiz del repositorio
-git init -b main                                       # convierte facturas-app en un repositorio (solo la primera vez)
-git add .                                              # prepara todo (sin node_modules ni .db, por los .gitignore)
-git status                                             # comprueba que NO aparecen node_modules ni facturas.db
-git commit -m "feat: aplicacion de facturas en 3 bloques con API por capas"   # guarda el cambio
+git config --global user.name "Su Nombre Completo"     # el nombre que aparecera en cada commit
+git config --global user.email "su_correo@ejemplo.com"  # el MISMO correo de su cuenta de GitHub
+git config --global --list                              # muestra la configuracion, para comprobar
+```
+
+| Parte | Qué significa |
+|---|---|
+| `--global` | Para **todos** los proyectos de este computador. Por eso se hace una sola vez. |
+| `user.email` | Debe ser el mismo correo de GitHub, para que GitHub reconozca que los commits son suyos. |
+
+✅ `git config --global --list` debe mostrar `user.name=...` y `user.email=...` con sus datos.
+
+#### Paso 3 · Convertir la carpeta en un repositorio de Git
+
+**¿Para qué?** Para que Git empiece a "vigilar" la carpeta `facturas-app` y pueda guardar su historial.
+
+Están en la carpeta `api` (donde ejecutaron `npm audit`). Suban a la carpeta principal del proyecto:
+
+```powershell
+cd ..             # sale de api/ a facturas-app/, la raiz del repositorio
+git init -b main  # convierte facturas-app en un repositorio, con la rama main (solo la primera vez)
+```
+
+✅ Debe decir algo como: `Initialized empty Git repository in C:/.../facturas-app/.git/`
+
+| Lo que aparece | Qué significa |
+|---|---|
+| `Initialized empty Git repository` | Se creó el repositorio, **vacío**: todavía no tiene ningún commit. |
+| `.git/` | Una carpeta **oculta** donde Git guarda todo el historial. **No la borren.** |
+| `-b main` | La rama principal se llama `main`, igual que en GitHub. |
+
+> ⚠️ Ejecútenlo en `facturas-app`, **no** en `api` ni en `front`. Debe haber **un solo** repositorio para los tres bloques.
+
+#### Paso 4 · Preparar los archivos y revisar qué se va a subir
+
+**¿Para qué?** `git add` escoge los archivos que van a entrar en el commit. `git status` muestra la lista, para **revisar antes de guardar**.
+
+```powershell
+git add .      # prepara todos los archivos (menos los que dicen los .gitignore)
+git status     # muestra la lista de lo que se va a guardar
+```
+
+✅ En verde, debe aparecer algo así:
+
+```text
+Changes to be committed:
+        new file:   .gitignore
+        new file:   api/.gitignore
+        new file:   api/package-lock.json
+        new file:   api/package.json
+        new file:   api/pruebas.http
+        new file:   api/src/crearBd.js
+        ...
+        new file:   bd/facturas.sql
+        new file:   front/app.js
+        ...
+```
+
+| Revisen que | Si no se cumple |
+|---|---|
+| Aparecen `bd/facturas.sql` y los archivos de `api/` y de `front/` | Están en la carpeta equivocada: vuelvan al paso 3. |
+| **NO** aparece `node_modules` | Falta el `.gitignore` de `api` o de `front`, o está mal escrito. Corríjanlo y repitan `git add .` |
+| **NO** aparece `facturas.db` | Falta el `.gitignore` de `facturas-app`. Corríjanlo y repitan `git add .` |
+
+> 💡 Las advertencias `LF will be replaced by CRLF` **no son errores**: Windows y Git escriben el fin de línea distinto. Se pueden ignorar.
+
+#### Paso 5 · Guardar la versión: el commit
+
+**¿Para qué?** Un **commit** es una "foto" del proyecto en este momento, con un mensaje que dice qué se hizo. Queda guardado en el historial, **en su computador**.
+
+```powershell
+git commit -m "feat: aplicacion de facturas en 3 bloques con API por capas"   # guarda la foto con su mensaje
+```
+
+✅ Debe decir algo como: `[main (root-commit) 1a2b3c4] feat: aplicacion de facturas...` y `18 files changed`.
+
+| Parte | Qué significa |
+|---|---|
+| `-m "..."` | El mensaje del commit. |
+| `feat:` | Por convención, `feat:` = una funcionalidad nueva; `fix:` = un arreglo; `docs:` = documentación. |
+| `root-commit` | Es el **primer** commit del repositorio. |
+| `1a2b3c4` | El código del commit: con él se identifica esta versión. |
+
+> ⚠️ Hasta aquí todo está **solo en su computador**. Los pasos 6 y 7 lo suben a la nube.
+
+#### Paso 6 · Crear el repositorio vacío en GitHub
+
+**¿Para qué?** Para tener **dónde** subir el proyecto: un repositorio en GitHub, **vacío**, que va a recibir lo que tienen en su computador.
+
+1. Entren a https://github.com e inicien sesión.
+2. Arriba a la derecha, clic en el botón **+** → **New repository**.
+3. Llenen la página así:
+
+| Campo | Qué poner | Para qué |
+|---|---|---|
+| **Repository name** | `facturas-app` | El nombre del repositorio: queda en la dirección `github.com/su-usuario/facturas-app`. |
+| **Description** | `Facturas: base de datos, API por capas y frontend` | Una frase que dice de qué se trata (opcional). |
+| **Public** | ✅ Marcado | Para que el profesor lo pueda ver. |
+| **Add a README file** | ❌ **Sin marcar** | El repositorio debe quedar **vacío**. Si GitHub crea un archivo, el `push` del paso 7 es rechazado. |
+| **Add .gitignore** | **None** | Ya lo tienen en su computador. |
+| **Choose a license** | **None** | No se necesita. |
+
+4. Clic en el botón verde **Create repository**.
+
+**Lo que aparece después:**
+
+| Lo que aparece | Qué significa |
+|---|---|
+| **Quick setup** y una dirección `https://github.com/su-usuario/facturas-app.git` | La dirección de su repositorio en la nube. La van a usar en el paso 7. |
+| **…or create a new repository on the command line** | Para un proyecto que **todavía no** tiene commits. **No es su caso**: no lo usen. |
+| **…or push an existing repository from the command line** | Para un proyecto que **ya** tiene commits, como el suyo. **Estos son los comandos del paso 7.** |
+
+#### Paso 7 · Conectar su repositorio con GitHub y subirlo
+
+**¿Para qué?** Para decirle a Git **a dónde** subir (`remote add`) y luego **subir** los commits (`push`).
+
+Copien los comandos de **"…or push an existing repository from the command line"** (el botón de copiar está a la derecha). Son estos, con **su** usuario:
+
+```powershell
+git remote add origin https://github.com/SU-USUARIO/facturas-app.git   # conecta con el repositorio de GitHub
+git branch -M main                                                      # se asegura de que la rama se llame main
+git push -u origin main                                                 # sube los commits a GitHub
 ```
 
 | Comando | Qué hace |
 |---|---|
-| `git init -b main` | Crea el repositorio en la carpeta, con la rama `main`. |
-| `git add .` | Prepara todo. Por los `.gitignore`, **no** incluye `node_modules` ni `facturas.db`. |
-| `git status` | Debe mostrar `facturas.sql`, los archivos de `api/` y de `front/`. **Si aparece `node_modules` o `facturas.db`**, un `.gitignore` está mal escrito o en otra carpeta. |
+| `git remote add origin <dirección>` | Guarda la dirección del repositorio de GitHub con el nombre **`origin`**. Se hace una sola vez. |
+| `git branch -M main` | Le pone `main` a la rama. Ya se llamaba así por el `-b main` del paso 3, así que no cambia nada; GitHub lo muestra por si acaso. |
+| `git push -u origin main` | **Sube** los commits de la rama `main` a `origin`. El `-u` lo recuerda, para que las próximas veces baste con `git push`. |
 
-Para subirlo, creen un repositorio **público** en GitHub (**New repository**, sin README) y ejecuten los dos comandos que GitHub muestra en **"…or push an existing repository from the command line"**: `git remote add origin ...` y `git push -u origin main`.
+**La primera vez, Git pide iniciar sesión en GitHub:**
+
+| Lo que aparece | Qué hacer |
+|---|---|
+| Una ventana **Connect to GitHub** | Clic en **Sign in with your browser**. |
+| Se abre el navegador con **Authorize Git Credential Manager** | Clic en **Authorize**. Así GitHub sabe que es usted quien sube. |
+| El navegador dice **Authentication Succeeded** | Vuelvan a la terminal: el push sigue solo. |
+
+✅ La terminal debe terminar con algo como:
+
+```text
+To https://github.com/su-usuario/facturas-app.git
+ * [new branch]      main -> main
+branch 'main' set up to track 'origin/main'.
+```
+
+| Lo que aparece | Qué significa |
+|---|---|
+| `[new branch] main -> main` | Se creó la rama `main` en GitHub con sus commits. |
+| `set up to track 'origin/main'` | Su rama `main` quedó conectada con la de GitHub (por el `-u`). |
+
+#### Paso 8 · Comprobar en GitHub que quedó en la nube
+
+**¿Para qué?** Para estar **seguros** de que se subió todo lo que tocaba, y nada de lo que no.
+
+Vuelvan a la página del repositorio en GitHub y opriman **F5**:
+
+| Revisen que | Debe estar |
+|---|---|
+| Las carpetas `api`, `bd` y `front`, y el archivo `.gitignore` | ✅ Sí |
+| `bd/facturas.sql` | ✅ Sí |
+| `node_modules` | ❌ **No** |
+| `bd/facturas.db` | ❌ **No** |
+| Arriba, el número de commits (por ejemplo, **1 Commit**) | ✅ Sí |
+
+#### Paso 9 · Cuando hagan más cambios
+
+**¿Para qué?** Cada vez que cambien algo y quieran que quede en la nube, se repite: **preparar → guardar → subir**.
+
+```powershell
+git add .                                    # prepara los cambios
+git status                                   # revisa que este bien lo que se va a guardar
+git commit -m "fix: lo que cambiaron"        # guarda la foto, con un mensaje que diga que cambio
+git push                                     # la sube a GitHub (ya no necesita -u origin main)
+```
+
+**Si algo falla con Git:**
+
+| Lo que sale | Por qué | Qué hacer |
+|---|---|---|
+| `Author identity unknown` / `Please tell me who you are` | Git no sabe su nombre ni su correo. | Hagan el **paso 2** y repitan el commit. |
+| `fatal: not a git repository` | Están en una carpeta que no es el repositorio. | `cd` a la carpeta `facturas-app` (paso 3). |
+| `error: src refspec main does not match any` | Todavía no hay ningún commit: no hay nada que subir. | Hagan el **paso 5** (commit) y repitan el push. |
+| `error: remote origin already exists` | Ya habían conectado un repositorio. | Para cambiar la dirección: `git remote set-url origin https://github.com/SU-USUARIO/facturas-app.git` |
+| `! [rejected] main -> main (fetch first)` | El repositorio de GitHub **no estaba vacío**: se marcó **Add a README file**. | Borren ese repositorio en GitHub (**Settings → Delete this repository**), créenlo de nuevo **vacío** (paso 6) y repitan el paso 7. |
+| `Permission denied` o `403` | Git está usando **otra** cuenta de GitHub. | En Windows: **Administrador de credenciales → Credenciales de Windows**, borren la de `git:https://github.com` y repitan el push. |
+| En GitHub aparece `node_modules` | Faltaba el `.gitignore` cuando hicieron `git add`. | Corrijan el `.gitignore` y ejecuten `git rm -r --cached api/node_modules`, luego commit y push. |
 
 > 📌 **Ejemplo del profesor:** https://github.com/ccastro2050/facturas-app
 
