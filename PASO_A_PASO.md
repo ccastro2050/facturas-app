@@ -35,7 +35,7 @@ Hoy construimos, **desde cero y completa**, una aplicación pequeña de **factur
 | 1. Conceptos | Los tres bloques, HTTP, JSON, las capas y SOLID | Entender lo que se va a construir |
 | 2. Bloque 1: la base de datos | `facturas.sql` | Guardar los productos |
 | 3. Bloque 2: la API | El proyecto de Node.js, las 3 capas y el servidor | Entregar y recibir los productos |
-| 4. Probar la API | El navegador y `pruebas.http` | Comprobar cada endpoint, incluidos los errores |
+| 4. Probar la API | El navegador, `pruebas.http` y Swagger | Comprobar cada endpoint, incluidos los errores, y documentar la API |
 | 5. Bloque 3: el frontend | `index.html`, `estilos.css`, `app.js` y su servidor | La página que ve el usuario, en http://localhost:3000 |
 | 6. Seguridad y Git | `npm audit`, `.gitignore` y commit | Dejarlo listo en el repositorio |
 
@@ -55,8 +55,9 @@ Hoy construimos, **desde cero y completa**, una aplicación pequeña de **factur
 | 10 | 3.8 | Crear `servidor.js` | — |
 | 11 | 3.9 | `npm run dev` | `API de facturas en http://localhost:3001` |
 | 12 | 4.1 y 4.2 | Probar en el navegador y con `pruebas.http` | Códigos 200, 201, 204, 400 y 404 |
-| 13 | 5.1 a 5.5 | Crear el frontend, prenderlo con `npm start` y abrir http://localhost:3000 | La tabla con los 8 productos |
-| 14 | 6.1 y 6.2 | `npm audit`, `.gitignore`, commit y push a GitHub | `found 0 vulnerabilities` y el proyecto en la nube |
+| 13 | 4.3 | `npm install swagger-ui-express`, `swagger.js` y abrir http://localhost:3001/api-docs | La página de Swagger con los 5 endpoints |
+| 14 | 5.1 a 5.5 | Crear el frontend, prenderlo con `npm start` y abrir http://localhost:3000 | La tabla con los 8 productos |
+| 15 | 6.1 y 6.2 | `npm audit`, `.gitignore`, commit y push a GitHub | `found 0 vulnerabilities` y el proyecto en la nube |
 
 ---
 
@@ -998,6 +999,311 @@ DELETE http://localhost:3001/api/productos/PR009
 
 > 💡 **Ahora los datos no se pierden:** apaguen la API (**Ctrl + C**), vuelvan a prenderla (`npm run dev`) y pidan los productos: lo que se creó sigue ahí, porque está guardado en `facturas.db`.
 
+### 4.3 Con Swagger: la documentación de la API, en una página
+
+**¿Para qué?** Para tener una **página web** que muestra todos los endpoints de la API y deja **probarlos con un botón**, sin escribir peticiones. Es lo que se usa en las empresas para que otros programadores (por ejemplo, el que hace el frontend) sepan **qué ofrece la API** sin leer el código.
+
+| Término | Qué es |
+|---|---|
+| **OpenAPI** | Un **formato estándar** para describir una API: las rutas, los métodos, los datos que recibe y las respuestas. |
+| **Swagger** | Las herramientas que convierten esa descripción en una **página web** que se lee y se prueba. |
+| **`swagger-ui-express`** | La librería de npm que pone esa página dentro de la API de Express. |
+
+**Paso 1 · Instalar la librería.** En la terminal de la API (carpeta `api`). Si la API está prendida, apáguenla primero con **Ctrl + C**:
+
+```powershell
+npm install swagger-ui-express
+```
+
+✅ Debe terminar con `found 0 vulnerabilities`, y en `package.json` aparece `"swagger-ui-express"` en `dependencies`.
+
+**Paso 2 · Escribir la documentación.** En `api/src/`, creen el archivo `swagger.js` y peguen:
+
+```javascript
+// =============================================================
+// swagger.js: la DOCUMENTACION de la API, en formato OpenAPI
+// QUE hace: describe cada endpoint: la ruta, el metodo, los datos
+// que recibe y las respuestas posibles (200, 201, 204, 400, 404).
+// PARA QUE: swagger-ui-express la convierte en una pagina web,
+// http://localhost:3001/api-docs, donde se lee y se prueba la API.
+// =============================================================
+
+// El esquema de un producto: lo usan varias respuestas, se escribe una vez
+const producto = {
+    // type: object = un objeto JSON con propiedades
+    type: "object",
+    properties: {
+        // example = el valor de ejemplo que muestra la pagina
+        codigo: { type: "string", example: "PR004" },
+        nombre: { type: "string", example: "Mouse HP" },
+        // integer = numero entero
+        stock: { type: "integer", example: 55 },
+        // number = numero con o sin decimales
+        valorunitario: { type: "number", example: 90000 },
+        // readOnly: lo calcula el servicio, no se envia
+        valorinventario: { type: "number", example: 4950000, readOnly: true },
+    },
+};
+
+// Los datos que se envian al crear (POST) un producto
+const productoNuevo = {
+    type: "object",
+    // required = los campos obligatorios
+    required: ["codigo", "nombre", "stock", "valorunitario"],
+    properties: {
+        // maxLength: igual que la validacion del servicio (maximo 10)
+        codigo: { type: "string", maxLength: 10, example: "PR009" },
+        nombre: { type: "string", example: "Parlante Bluetooth JBL" },
+        // minimum: el stock no puede ser negativo
+        stock: { type: "integer", minimum: 0, example: 20 },
+        // exclusiveMinimum: el valor debe ser MAYOR que 0
+        valorunitario: { type: "number", minimum: 0, exclusiveMinimum: true, example: 350000 },
+    },
+};
+
+// Los datos que se envian al modificar (PUT): todo menos el codigo, que va en la URL
+const productoCambios = {
+    type: "object",
+    required: ["nombre", "stock", "valorunitario"],
+    properties: {
+        nombre: { type: "string", example: "Parlante Bluetooth JBL Flip" },
+        stock: { type: "integer", minimum: 0, example: 18 },
+        valorunitario: { type: "number", minimum: 0, exclusiveMinimum: true, example: 330000 },
+    },
+};
+
+// El parametro :codigo de la URL, que usan GET, PUT y DELETE de un producto
+const parametroCodigo = {
+    // name = como se llama; in: path = va dentro de la ruta
+    name: "codigo",
+    in: "path",
+    required: true,
+    description: "El codigo del producto",
+    schema: { type: "string", example: "PR004" },
+};
+
+// Las respuestas de error, escritas una vez
+const error404 = {
+    description: "Producto no encontrado",
+    content: { "application/json": { example: { error: "Producto no encontrado" } } },
+};
+const error400 = {
+    description: "Datos malos: la validacion del servicio dice todos los errores",
+    content: { "application/json": { example: { errores: ["El nombre es obligatorio."] } } },
+};
+
+// El documento completo
+const documentacion = {
+    // La version del formato OpenAPI
+    openapi: "3.0.3",
+    // info: el titulo y la descripcion que salen arriba de la pagina
+    info: {
+        title: "API de facturas",
+        version: "1.0.0",
+        description: "La API del ejemplo de facturas: 5 endpoints para la tabla producto.",
+    },
+    // servers: a donde se envian las peticiones de "Try it out"
+    servers: [{ url: "http://localhost:3001" }],
+    // paths: cada ruta, con sus metodos
+    paths: {
+        "/api/productos": {
+            // get: listar
+            get: {
+                // tags: agrupa los endpoints en la pagina
+                tags: ["Productos"],
+                summary: "Todos los productos",
+                responses: {
+                    // 200 = OK; type array = una lista de productos
+                    200: {
+                        description: "La lista de productos",
+                        content: { "application/json": { schema: { type: "array", items: producto } } },
+                    },
+                },
+            },
+            // post: crear
+            post: {
+                tags: ["Productos"],
+                summary: "Crear un producto",
+                // requestBody: el JSON que se envia
+                requestBody: {
+                    required: true,
+                    content: { "application/json": { schema: productoNuevo } },
+                },
+                responses: {
+                    201: { description: "Creado", content: { "application/json": { schema: producto } } },
+                    400: error400,
+                },
+            },
+        },
+        // {codigo} = la parte de la ruta que cambia (en Express se escribe :codigo)
+        "/api/productos/{codigo}": {
+            get: {
+                tags: ["Productos"],
+                summary: "Un producto",
+                parameters: [parametroCodigo],
+                responses: {
+                    200: { description: "El producto", content: { "application/json": { schema: producto } } },
+                    404: error404,
+                },
+            },
+            put: {
+                tags: ["Productos"],
+                summary: "Modificar un producto",
+                parameters: [parametroCodigo],
+                requestBody: {
+                    required: true,
+                    content: { "application/json": { schema: productoCambios } },
+                },
+                responses: {
+                    200: { description: "Modificado", content: { "application/json": { schema: producto } } },
+                    400: error400,
+                    404: error404,
+                },
+            },
+            delete: {
+                tags: ["Productos"],
+                summary: "Eliminar un producto",
+                parameters: [parametroCodigo],
+                responses: {
+                    // 204 = hecho, sin cuerpo
+                    204: { description: "Eliminado, sin nada que devolver" },
+                    404: error404,
+                },
+            },
+        },
+    },
+};
+
+// Lo que entrega este archivo: el documento, para servidor.js
+export default documentacion;
+```
+
+| Parte | Qué significa |
+|---|---|
+| `producto`, `productoNuevo`, `productoCambios` | Cómo es un producto: el que **responde** la API, el que se **envía** para crear y el que se envía para modificar. Se escriben una vez y se usan en varios endpoints. |
+| `example` | El valor de ejemplo que la página muestra y pone en el formulario de prueba. |
+| `required`, `maxLength`, `minimum` | Las mismas reglas que valida el **servicio**: así la documentación dice la verdad sobre la API. |
+| `paths` | Cada ruta con sus métodos: `get`, `post`, `put`, `delete`. |
+| `{codigo}` | La parte de la ruta que cambia. En OpenAPI va entre llaves; en Express se escribe `:codigo`. |
+| `responses` | Los códigos posibles de cada endpoint: 200, 201, 204, 400 y 404. |
+| `servers` | La dirección a la que la página envía las pruebas: la API, en el puerto 3001. |
+
+**Paso 3 · Conectarla en el servidor.** Abran `api/src/servidor.js`, **borren todo** y peguen el archivo completo. Solo cambian **dos `import`** y **una línea** con `app.use("/api-docs", ...)`, comentados:
+
+```javascript
+// =============================================================
+// servidor.js: el punto de entrada de la API (bloque 2 de 3)
+// QUE hace: crea el servidor con Express, le conecta las rutas
+// y lo pone a escuchar en el puerto 3001.
+// Se ejecuta con: npm run dev
+// =============================================================
+
+// express: la libreria que crea el servidor web
+import express from "express";
+// cors: permite que el frontend (otro origen) le pida datos a la API
+import cors from "cors";
+// swagger-ui-express: convierte la documentacion en una pagina web
+import swaggerUi from "swagger-ui-express";
+// La capa de rutas
+import productoRutas from "./rutas/productoRutas.js";
+// La documentacion de la API (formato OpenAPI)
+import documentacion from "./swagger.js";
+
+// El puerto: el "numero de puerta" por donde la API recibe peticiones
+const PUERTO = 3001;
+
+// Crea la aplicacion
+const app = express();
+
+// MIDDLEWARES: se ejecutan en CADA peticion, antes de las rutas
+// cors(): le da permiso al frontend para llamar a la API
+app.use(cors());
+// express.json(): convierte el JSON que llega en un objeto (req.body)
+app.use(express.json());
+
+// GET / -> un mensaje para saber que la API esta viva
+app.get("/", (req, res) => {
+    res.json({ mensaje: "API de facturas funcionando", productos: "/api/productos" });
+});
+
+// Conecta las rutas de productos debajo de /api/productos
+app.use("/api/productos", productoRutas);
+
+// Swagger: la pagina de la documentacion, en http://localhost:3001/api-docs
+// swaggerUi.serve = los archivos de la pagina; swaggerUi.setup = la llena con la documentacion
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(documentacion));
+
+// Si ninguna ruta coincide: 404 en JSON
+app.use((req, res) => {
+    res.status(404).json({ error: "Ruta no encontrada" });
+});
+
+// Manejo de errores (4 parametros): si llega un JSON mal escrito o algo falla,
+// responde en JSON en vez de una pagina HTML de error
+app.use((err, req, res, next) => {
+    // Muestra el error en la terminal, para saber que paso (por ejemplo: no such table: producto)
+    console.error("Error:", err.message);
+    // err.status = 400 si el JSON llego mal escrito; si no trae codigo, es un 500
+    const codigo = err.status || 500;
+    res.status(codigo).json({ error: codigo === 400 ? "El JSON enviado no es valido" : "Error interno del servidor" });
+});
+
+// Pone la API a escuchar. error = lo que fallo (por ejemplo, el puerto ocupado)
+app.listen(PUERTO, (error) => {
+    if (error) {
+        console.error(`No se pudo iniciar la API: el puerto ${PUERTO} esta ocupado (${error.code}).`);
+        console.error("Cierren la otra terminal donde la API ya esta corriendo, u opriman Ctrl + C en ella.");
+        return;
+    }
+    console.log(`API de facturas en http://localhost:${PUERTO}`);
+});
+```
+
+| Línea nueva | Qué hace |
+|---|---|
+| `import swaggerUi from "swagger-ui-express";` | Trae la librería que dibuja la página. |
+| `import documentacion from "./swagger.js";` | Trae la documentación del paso 2. |
+| `app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(documentacion));` | Publica la página en `/api-docs`. Va **antes** del 404, para que la encuentre. |
+
+**Paso 4 · Prender la API y abrir la página:**
+
+```powershell
+npm run dev
+```
+
+Abran en el navegador: **http://localhost:3001/api-docs**
+
+![La página de Swagger con los 5 endpoints de la API de facturas](imagenes/swagger_api.png)
+
+| Lo que aparece | Qué significa |
+|---|---|
+| **API de facturas** `1.0.0` `OAS 3.0` | El título y la versión de `info`. `OAS 3.0` = OpenAPI versión 3. |
+| **Servers** `http://localhost:3001` | A dónde se envían las pruebas: la API. |
+| **Productos** | El grupo (`tags`) que reúne los 5 endpoints. |
+| `GET` azul, `POST` verde, `PUT` naranja, `DELETE` rojo | Cada método con su color. Al lado, la ruta y el `summary`. |
+| La flecha **⌄** a la derecha | Abre el endpoint: muestra los parámetros, el JSON de ejemplo y las respuestas posibles. |
+
+**Paso 5 · Probar un endpoint desde la página:**
+
+1. Clic en **GET /api/productos/{codigo}** para abrirlo.
+2. Clic en **Try it out** (a la derecha).
+3. En el campo **codigo**, escriban `PR004`.
+4. Clic en el botón azul **Execute**.
+
+| Lo que aparece abajo | Qué significa |
+|---|---|
+| **Curl** | La misma petición escrita como comando de terminal. |
+| **Request URL** `http://localhost:3001/api/productos/PR004` | La dirección que se pidió. |
+| **Code** `200` y el JSON del Mouse HP | La respuesta de la API: igual que en el navegador (4.1). |
+
+> 💡 Prueben también **POST** (el JSON de ejemplo ya viene escrito: cámbienle el código a `PR010`), un código que no existe (**404**) y un **POST** con el nombre vacío (**400**). Lo que se crea desde Swagger **queda guardado** en la base de datos, igual que con REST Client.
+
+| | REST Client (`pruebas.http`) | Swagger (`/api-docs`) |
+|---|---|---|
+| Dónde se usa | Dentro de VS Code | En el navegador |
+| Qué hay que escribir | Cada petición, a mano | Nada: los formularios salen de la documentación |
+| Para qué sirve más | Guardar las pruebas en un archivo | Mostrarle a otros qué ofrece la API |
+
 ---
 
 ## Parte 5 · Bloque 3: el frontend
@@ -1799,7 +2105,9 @@ git push                                     # la sube a GitHub (ya no necesita 
 |---|---|---|
 | `node : El término 'node' no se reconoce...` | Node.js no está instalado, o VS Code se abrió antes de instalarlo. | Instalar Node.js LTS y **reiniciar VS Code** (0.1). |
 | `npm error enoent Could not read package.json` | Se ejecutó `npm` fuera de la carpeta `api`. | `cd facturas-app/api` y repetir. |
-| `Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'express'` | Falta instalar las librerías: no existe `node_modules`. | `npm install` en la carpeta `api`. |
+| http://localhost:3001/api-docs responde `{"error":"Ruta no encontrada"}` | Falta la línea `app.use("/api-docs", ...)` en `servidor.js`, o quedó **después** del 404. | Pegar `servidor.js` completo (4.3, paso 3). |
+| En Swagger, **Execute** muestra `Failed to fetch` | La API está apagada. | `npm run dev` en la carpeta `api`. |
+| `Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'express'` (o `'swagger-ui-express'`) | Falta instalar las librerías: no existe `node_modules`, o falta la de Swagger. | `npm install` en la carpeta `api` (y `npm install swagger-ui-express`). |
 | `Error [ERR_MODULE_NOT_FOUND]: Cannot find module '...\src\rutas\productoRutas'` | En un `import` falta el **`.js`** al final, o el nombre del archivo está mal escrito. | Escribir la ruta completa con `.js`: `"./rutas/productoRutas.js"`. |
 | La API responde `{"error":"Error interno del servidor"}` y la terminal dice `Error: no such table: producto` | La base de datos no se ha creado: falta ejecutar el script. | `npm run crear-bd` (3.4). |
 | `Error: ENOENT: no such file or directory, open '...\bd\facturas.sql'` | `facturas.sql` no está en `facturas-app/bd/`, o tiene otro nombre. | Revisar la estructura de carpetas (0.2). |
@@ -1837,6 +2145,7 @@ git push                                     # la sube a GitHub (ya no necesita 
 | **Middleware** | Función que se ejecuta en cada petición antes de las rutas: `cors()`, `express.json()`. |
 | **Node.js** | Programa que ejecuta JavaScript fuera del navegador. |
 | **npm** | El gestor de paquetes de Node.js: instala librerías y ejecuta scripts. |
+| **OpenAPI** | Formato estándar para describir una API: rutas, métodos, datos y respuestas. Aquí está en `swagger.js`. |
 | **`package.json`** | La ficha del proyecto: nombre, librerías y comandos. |
 | **Petición / respuesta** | Lo que el cliente pide / lo que el servidor devuelve. |
 | **Puerto** | Número que identifica a un programa en el computador: 3001 para la API. |
@@ -1845,3 +2154,4 @@ git push                                     # la sube a GitHub (ya no necesita 
 | **Servicio (capa)** | La capa de las reglas del negocio: validar y calcular. |
 | **SOLID** | 5 principios para escribir código fácil de cambiar. |
 | **SQLite** | Base de datos que se guarda en un solo archivo y viene con Node.js. |
+| **Swagger** | Herramientas que convierten la descripción OpenAPI en una página web para leer y probar la API: http://localhost:3001/api-docs. |

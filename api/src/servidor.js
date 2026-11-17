@@ -9,8 +9,12 @@
 import express from "express";
 // cors: permite que el frontend (otro origen) le pida datos a la API
 import cors from "cors";
+// swagger-ui-express: convierte la documentacion en una pagina web
+import swaggerUi from "swagger-ui-express";
 // La capa de rutas
 import productoRutas from "./rutas/productoRutas.js";
+// La documentacion de la API (formato OpenAPI)
+import documentacion from "./swagger.js";
 
 // El puerto: el "numero de puerta" por donde la API recibe peticiones
 const PUERTO = 3001;
@@ -31,6 +35,10 @@ app.get("/", (req, res) => {
 
 // Conecta las rutas de productos debajo de /api/productos
 app.use("/api/productos", productoRutas);
+
+// Swagger: la pagina de la documentacion, en http://localhost:3001/api-docs
+// swaggerUi.serve = los archivos de la pagina; swaggerUi.setup = la llena con la documentacion
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(documentacion));
 
 // Si ninguna ruta coincide: 404 en JSON
 app.use((req, res) => {

@@ -147,12 +147,12 @@ Un **endpoint** es una combinación de **método + ruta**. Cada uno hace una sol
 | 0 | Revisar que tienen Node.js y Git | Sin ellos, nada de lo demás funciona | Solo la primera vez |
 | 1 | Descargar el proyecto con `git clone` | Tener el código en su computador | Solo la primera vez |
 | 2 | Abrir la carpeta en VS Code | Ver el código y tener una terminal a la mano | Cada vez |
-| 3 | Instalar las librerías con `npm install` | La API necesita Express y cors | Solo la primera vez |
+| 3 | Instalar las librerías con `npm install` | La API necesita Express, cors y Swagger | Solo la primera vez |
 | 4 | Crear la base de datos con `npm run crear-bd` | Tener la tabla `producto` con 8 productos | Solo la primera vez |
 | 5 | Prender la API con `npm run dev` (terminal 1) | Que la API reciba peticiones | **Cada vez** que vayan a trabajar |
 | 6 | Ver la API en el navegador | Comprobar que la API responde | Para probar |
 | 7 | Prender el frontend con `npm start` (terminal 2) y abrir http://localhost:3000 | Usar la aplicación como usuario | **Cada vez** que vayan a trabajar |
-| 8 | Probar todos los endpoints con `pruebas.http` | Probar crear, modificar, eliminar y los errores | Para probar |
+| 8 | Probar todos los endpoints con `pruebas.http` o con **Swagger** (http://localhost:3001/api-docs) | Probar crear, modificar, eliminar y los errores | Para probar |
 | 9 | Leer la guía y los conceptos | Entender **por qué** está organizado así | Antes o después de la clase |
 
 Abajo está cada paso explicado en detalle.
@@ -177,6 +177,7 @@ facturas-app/
 │   └── src/
 │       ├── servidor.js                  # prende la API en el puerto 3001
 │       ├── crearBd.js                   # ejecuta facturas.sql y crea bd/facturas.db
+│       ├── swagger.js                   # la documentacion de la API (OpenAPI), que se ve en /api-docs
 │       ├── rutas/productoRutas.js               # CAPA 1 · HTTP: recibe la petición y responde con el código correcto
 │       ├── servicios/productoServicio.js        # CAPA 2 · reglas: valida y calcula el valor del inventario
 │       └── repositorios/productoRepositorio.js  # CAPA 3 · datos: el SQL que lee y escribe en la base
@@ -375,6 +376,26 @@ Prueben en la página:
 | 7. Código repetido | 400 |
 | 8. Modificar el PR009 | 200 |
 | 9. Eliminar el PR009 | 204 |
+
+### Otra forma: Swagger, en el navegador
+
+*Para qué:* ver **todos los endpoints** en una página y probarlos con un botón, sin escribir las peticiones.
+
+Con la API prendida, abran **http://localhost:3001/api-docs**
+
+![La página de Swagger con los 5 endpoints](imagenes/swagger_api.png)
+
+1. Clic en un endpoint, por ejemplo **GET /api/productos/{codigo}**, para abrirlo.
+2. Clic en **Try it out**, escriban `PR004` en **codigo** y clic en **Execute**.
+3. Abajo aparece la respuesta: **Code 200** y el JSON del Mouse HP.
+
+| Lo que aparece | Qué significa |
+|---|---|
+| `GET` azul, `POST` verde, `PUT` naranja, `DELETE` rojo | Los 5 endpoints de la API, cada método con su color. |
+| **Try it out** y **Execute** | Envían la petición de verdad: lo que se crea **queda guardado** en la base de datos. |
+| **Code** | El código de estado de la respuesta: 200, 201, 204, 400 o 404. |
+
+La página sale del archivo `api/src/swagger.js`, que **describe** la API en formato **OpenAPI**. La librería `swagger-ui-express` la convierte en página (ver `servidor.js`).
 
 ---
 
