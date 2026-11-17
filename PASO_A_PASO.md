@@ -35,7 +35,7 @@ Hoy construimos, **desde cero y completa**, una aplicación pequeña de **factur
 | 1. Conceptos | Los tres bloques, HTTP, JSON, las capas y SOLID | Entender lo que se va a construir |
 | 2. Bloque 1: la base de datos | `facturas.sql` | Guardar los productos |
 | 3. Bloque 2: la API | El proyecto de Node.js, las 3 capas y el servidor | Entregar y recibir los productos |
-| 4. Probar la API | El navegador, `pruebas.http` y Swagger | Comprobar cada endpoint, incluidos los errores, y documentar la API |
+| 4. Probar la API | El navegador, `pruebas.http`, Swagger y Postman | Comprobar cada endpoint, incluidos los errores, y documentar la API |
 | 5. Bloque 3: el frontend | `index.html`, `estilos.css`, `app.js` y su servidor | La página que ve el usuario, en http://localhost:3000 |
 | 6. Seguridad y Git | `npm audit`, `.gitignore` y commit | Dejarlo listo en el repositorio |
 
@@ -56,8 +56,9 @@ Hoy construimos, **desde cero y completa**, una aplicación pequeña de **factur
 | 11 | 3.9 | `npm run dev` | `API de facturas en http://localhost:3001` |
 | 12 | 4.1 y 4.2 | Probar en el navegador y con `pruebas.http` | Códigos 200, 201, 204, 400 y 404 |
 | 13 | 4.3 | `npm install swagger-ui-express`, `swagger.js` y abrir http://localhost:3001/api-docs | La página de Swagger con los 5 endpoints |
-| 14 | 5.1 a 5.5 | Crear el frontend, prenderlo con `npm start` y abrir http://localhost:3000 | La tabla con los 8 productos |
-| 15 | 6.1 y 6.2 | `npm audit`, `.gitignore`, commit y push a GitHub | `found 0 vulnerabilities` y el proyecto en la nube |
+| 14 | 4.4 | Instalar la extensión Postman, iniciar sesión y enviar un GET y un POST | `200 OK` y `201 Created` |
+| 15 | 5.1 a 5.5 | Crear el frontend, prenderlo con `npm start` y abrir http://localhost:3000 | La tabla con los 8 productos |
+| 16 | 6.1 y 6.2 | `npm audit`, `.gitignore`, commit y push a GitHub | `found 0 vulnerabilities` y el proyecto en la nube |
 
 ---
 
@@ -1304,6 +1305,65 @@ Abran en el navegador: **http://localhost:3001/api-docs**
 | Qué hay que escribir | Cada petición, a mano | Nada: los formularios salen de la documentación |
 | Para qué sirve más | Guardar las pruebas en un archivo | Mostrarle a otros qué ofrece la API |
 
+### 4.4 Con Postman, dentro de VS Code
+
+**¿Para qué?** **Postman** es la herramienta más usada en las empresas para probar APIs. Tiene una **extensión para VS Code**: se prueba la API sin salir del editor, con formularios en vez de escribir las peticiones a mano.
+
+> ⚠️ La extensión de Postman **pide iniciar sesión** con una cuenta de Postman. La cuenta es **gratis**: se crea con el correo o con la cuenta de Google.
+
+**Paso 1 · Instalar la extensión.** En VS Code: **Extensions** (`Ctrl + Shift + X`) → buscar **Postman** → la del autor **Postman** → **Install**.
+
+**Paso 2 · Iniciar sesión.** En la barra de la izquierda aparece el ícono de **Postman** (un muñeco naranja). Clic en él → **Sign In**. Se abre el navegador: inicien sesión o creen la cuenta, y acepten volver a VS Code. Luego elijan el espacio de trabajo **My Workspace**.
+
+**Paso 3 · Una petición GET.** Con la API prendida (`npm run dev`):
+
+1. Clic en **New HTTP Request** (o `Ctrl + Shift + P` → **Postman: Create a new HTTP Request**).
+2. A la izquierda de la URL, dejen el método en **GET**.
+3. En la URL escriban `http://localhost:3001/api/productos/PR004`.
+4. Clic en **Send**.
+
+| Lo que aparece abajo | Qué significa |
+|---|---|
+| **200 OK** | El código de estado: encontrado. |
+| El tiempo (`ms`) y el tamaño (`B`) | Cuánto tardó la API y cuánto pesa la respuesta. |
+| **Body** con el JSON del Mouse HP | La respuesta de la API, ya ordenada. |
+
+**Paso 4 · Una petición POST con JSON:**
+
+1. **New HTTP Request** → cambien el método a **POST**.
+2. URL: `http://localhost:3001/api/productos`
+3. Debajo de la URL: pestaña **Body** → **raw** → a la derecha elijan **JSON**.
+4. Peguen:
+
+```json
+{
+  "codigo": "PR010",
+  "nombre": "Cargador Xiaomi 33W",
+  "stock": 12,
+  "valorunitario": 85000
+}
+```
+
+5. Clic en **Send** → **201 Created** y el producto con su `valorinventario` (1.020.000).
+
+| En Postman | Equivale en `pruebas.http` a |
+|---|---|
+| El método (**GET**, **POST**, **PUT**, **DELETE**) y la URL | La primera línea: `POST http://...` |
+| **Body → raw → JSON** | `Content-Type: application/json`, la línea vacía y el `{ ... }`. Postman pone el encabezado solo. |
+| **Send** | **Send Request** |
+
+> 💡 Prueben también las 9 peticiones de la tabla de la 4.2: cambian solo el método, la URL y el JSON. Para no escribirlas otra vez, cada petición se puede guardar con **Save** en una **Collection** (una carpeta de peticiones), por ejemplo **API de facturas**.
+
+**Las cuatro formas de probar la API:**
+
+| | Navegador | REST Client | Swagger | Postman |
+|---|---|---|---|---|
+| Dónde | El navegador | VS Code | El navegador | VS Code (o su aplicación) |
+| Qué métodos | Solo **GET** | Todos | Todos | Todos |
+| ¿Pide cuenta? | No | No | No | **Sí**, gratis |
+| Las pruebas quedan | — | En `pruebas.http`, dentro del proyecto y de GitHub | En `swagger.js`, la documentación | En la cuenta de Postman |
+| Para qué sirve más | Una mirada rápida | Guardar las pruebas con el código | Mostrar qué ofrece la API | Lo que se usa en las empresas |
+
 ---
 
 ## Parte 5 · Bloque 3: el frontend
@@ -2106,6 +2166,8 @@ git push                                     # la sube a GitHub (ya no necesita 
 | `node : El término 'node' no se reconoce...` | Node.js no está instalado, o VS Code se abrió antes de instalarlo. | Instalar Node.js LTS y **reiniciar VS Code** (0.1). |
 | `npm error enoent Could not read package.json` | Se ejecutó `npm` fuera de la carpeta `api`. | `cd facturas-app/api` y repetir. |
 | http://localhost:3001/api-docs responde `{"error":"Ruta no encontrada"}` | Falta la línea `app.use("/api-docs", ...)` en `servidor.js`, o quedó **después** del 404. | Pegar `servidor.js` completo (4.3, paso 3). |
+| En Postman sale `Error: connect ECONNREFUSED 127.0.0.1:3001` | La API está apagada. | `npm run dev` en la carpeta `api`. |
+| En Postman, el POST responde **400** con todos los errores | El cuerpo no se envió como JSON. | **Body → raw → JSON**, no **Text**. |
 | En Swagger, **Execute** muestra `Failed to fetch` | La API está apagada. | `npm run dev` en la carpeta `api`. |
 | `Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'express'` (o `'swagger-ui-express'`) | Falta instalar las librerías: no existe `node_modules`, o falta la de Swagger. | `npm install` en la carpeta `api` (y `npm install swagger-ui-express`). |
 | `Error [ERR_MODULE_NOT_FOUND]: Cannot find module '...\src\rutas\productoRutas'` | En un `import` falta el **`.js`** al final, o el nombre del archivo está mal escrito. | Escribir la ruta completa con `.js`: `"./rutas/productoRutas.js"`. |
@@ -2148,6 +2210,7 @@ git push                                     # la sube a GitHub (ya no necesita 
 | **OpenAPI** | Formato estándar para describir una API: rutas, métodos, datos y respuestas. Aquí está en `swagger.js`. |
 | **`package.json`** | La ficha del proyecto: nombre, librerías y comandos. |
 | **Petición / respuesta** | Lo que el cliente pide / lo que el servidor devuelve. |
+| **Postman** | Herramienta para probar APIs con formularios. Tiene aplicación y extensión de VS Code; pide una cuenta gratis. |
 | **Puerto** | Número que identifica a un programa en el computador: 3001 para la API. |
 | **Responsive** | Que la página se acomoda sola al tamaño de la pantalla: computador o celular. |
 | **Repositorio (capa)** | La capa que escribe el SQL. No confundir con el repositorio de GitHub. |
