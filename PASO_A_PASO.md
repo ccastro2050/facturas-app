@@ -870,6 +870,29 @@ API de facturas en http://localhost:3001
 
 > 💡 **Para apagar la API:** clic en la terminal y **Ctrl + C**. **Para escribir otros comandos** con la API prendida, abran una **segunda terminal** con el botón **+** del panel de la terminal.
 
+#### ⚠️ Las 3 reglas de los puertos, para que no salga "puerto ocupado"
+
+Un **puerto** solo lo puede usar **un programa a la vez**. Si la API ya está prendida y se prende otra vez, la segunda no arranca.
+
+| # | Regla | Por qué |
+|---|---|---|
+| 1 | **Cada servidor se prende UNA sola vez**, en su propia terminal: la API (puerto **3001**) en una y, más adelante, el frontend (puerto **3000**) en otra. | Si se prende dos veces, la segunda dice `el puerto 3001 esta ocupado`. |
+| 2 | **Para apagar, Ctrl + C** en su terminal. Antes de cerrar VS Code, **Ctrl + C en todas las terminales** que tengan un servidor. | Si se cierra VS Code sin apagar, el servidor puede quedar prendido "escondido" y ocupar el puerto. |
+| 3 | Si sale **`el puerto ... esta ocupado`**: buscar la terminal donde ya está prendido y usar esa, o hacer **Ctrl + C** ahí y volver a prender. | No es un error del código: el servidor **ya está corriendo**. |
+
+**Si el puerto sigue ocupado y no hay ninguna terminal con el servidor** (por ejemplo, se cerró VS Code sin Ctrl + C), este comando apaga el programa que tiene el puerto. En una terminal de PowerShell:
+
+```powershell
+# Apaga el programa que esta usando el puerto 3001 (para el frontend, cambien 3001 por 3000)
+Stop-Process -Id (Get-NetTCPConnection -LocalPort 3001 -State Listen).OwningProcess -Force
+```
+
+| Parte | Qué hace |
+|---|---|
+| `Get-NetTCPConnection -LocalPort 3001 -State Listen` | Busca quién está escuchando en el puerto 3001. |
+| `.OwningProcess` | El número del programa que lo tiene ocupado. |
+| `Stop-Process -Id ... -Force` | Apaga ese programa. Después, `npm run dev` funciona otra vez. |
+
 ---
 
 ## Parte 4 · Probar la API
@@ -1857,6 +1880,8 @@ Ahora tienen **dos terminales prendidas**:
 | 1 | `api` | `npm run dev` | `API de facturas en http://localhost:3001` |
 | 2 | `front` | `npm start` | `Frontend de facturas en http://localhost:3000` |
 
+> ⚠️ **Las dos terminales quedan prendidas mientras se trabaja.** No ejecuten `npm run dev` ni `npm start` otra vez: ya están corriendo. **Al terminar:** **Ctrl + C** en la terminal 2 (frontend) y **Ctrl + C** en la terminal 1 (API). Si sale `el puerto ... esta ocupado`, vean **las 3 reglas de los puertos** (3.9).
+
 **Resultado:**
 
 ![La página con la tabla de los 8 productos, su valor de inventario y los botones Editar y Eliminar](imagenes/front_productos.png)
@@ -2175,6 +2200,8 @@ git push                                     # la sube a GitHub (ya no necesita 
 | `Error: ENOENT: no such file or directory, open '...\bd\facturas.sql'` | `facturas.sql` no está en `facturas-app/bd/`, o tiene otro nombre. | Revisar la estructura de carpetas (0.2). |
 | `ExperimentalWarning: SQLite is an experimental feature` | Falta `--disable-warning=ExperimentalWarning` en el script. **No es un error**: la API funciona igual. | Revisar los scripts de `package.json` (3.2). |
 | `No se pudo iniciar la API: el puerto 3001 esta ocupado (EADDRINUSE).` | La API ya está prendida en **otra terminal**. | Ir a esa terminal y **Ctrl + C**, o cerrarla. |
+| `No se pudo iniciar el frontend: el puerto 3000 esta ocupado (EADDRINUSE).` | El frontend ya está prendido en **otra terminal**. | Ir a esa terminal y **Ctrl + C**, o cerrarla. |
+| Sigue diciendo **puerto ocupado** y no hay ninguna terminal con el servidor | Se cerró VS Code sin **Ctrl + C**: el servidor quedó prendido escondido. | `Stop-Process -Id (Get-NetTCPConnection -LocalPort 3001 -State Listen).OwningProcess -Force` (con `3000` para el frontend). Ver 3.9. |
 | El navegador dice **"No se puede acceder a este sitio"** o **"rechazó la conexión"** en `localhost:3001` | La API está apagada. | `npm run dev` en la carpeta `api` (3.9). |
 | El navegador dice **"rechazó la conexión"** en `localhost:3000` | El frontend está apagado. | `npm start` en la carpeta `front` (5.5). |
 | La página dice **"No se pudo conectar con la API"** | La API está apagada. | `npm run dev` y **F5** en la página. |
